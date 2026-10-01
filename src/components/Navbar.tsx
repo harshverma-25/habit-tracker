@@ -2,9 +2,13 @@
 
 import React from "react";
 import Link from "next/link";
-import { Sparkles, LayoutDashboard, BarChart3, Settings } from "lucide-react";
+import Image from "next/image";
+import { useSession, signIn, signOut } from "next-auth/react";
+import { Sparkles, LayoutDashboard, BarChart3, Settings, LogOut, LogIn } from "lucide-react";
 
 export function Navbar() {
+  const { data: session } = useSession();
+
   return (
     <header className="sticky top-0 z-40 w-full border-b border-neutral-800/80 bg-neutral-950/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
@@ -45,16 +49,45 @@ export function Navbar() {
           </button>
         </nav>
 
-        {/* User Profile Avatar / Sign In Mock */}
+        {/* User Profile Avatar / Sign In / Sign Out Flow */}
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2.5 rounded-full border border-neutral-800 bg-neutral-900/90 p-1.5 pr-3 shadow-inner">
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-xs font-semibold text-white">
-              HV
+          {session?.user ? (
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2.5 rounded-full border border-neutral-800 bg-neutral-900/90 p-1.5 pr-3 shadow-inner">
+                {session.user.image ? (
+                  <Image
+                    src={session.user.image}
+                    alt={session.user.name || "User Avatar"}
+                    width={28}
+                    height={28}
+                    className="rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-xs font-semibold text-white">
+                    {session.user.name?.charAt(0) || "U"}
+                  </div>
+                )}
+                <span className="hidden text-xs font-medium text-neutral-300 sm:inline-block">
+                  {session.user.name || "User"}
+                </span>
+              </div>
+              <button
+                onClick={() => signOut({ callbackUrl: "/" })}
+                title="Sign out"
+                className="flex h-9 w-9 items-center justify-center rounded-lg border border-neutral-800 bg-neutral-900 text-neutral-400 hover:bg-neutral-800 hover:text-white transition-colors"
+              >
+                <LogOut className="h-4 w-4" />
+              </button>
             </div>
-            <span className="hidden text-xs font-medium text-neutral-300 sm:inline-block">
-              Harsh V.
-            </span>
-          </div>
+          ) : (
+            <button
+              onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+              className="flex items-center gap-2 rounded-lg bg-blue-600 px-3.5 py-1.5 text-sm font-semibold text-white hover:bg-blue-500 transition-colors shadow-md shadow-blue-500/20"
+            >
+              <LogIn className="h-4 w-4" />
+              <span>Sign In</span>
+            </button>
+          )}
         </div>
       </div>
     </header>

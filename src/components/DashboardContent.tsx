@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useSession } from "next-auth/react";
 import { Navbar } from "@/components/Navbar";
 import { StatsCards } from "@/components/StatsCards";
 import { MonthSelector } from "@/components/MonthSelector";
@@ -16,9 +17,13 @@ import {
 import { Habit, HabitCompletion } from "@/types/habit";
 
 export function DashboardContent() {
+  const { data: session } = useSession();
   const [habits, setHabits] = useState<Habit[]>(MOCK_HABITS);
   const [completions, setCompletions] = useState<HabitCompletion[]>(INITIAL_MOCK_COMPLETIONS);
   const monthData = getOctober2026MonthData();
+
+  // Dynamic user name from authenticated Google Session
+  const userName = session?.user?.name || "Harsh";
 
   // Toggle mock completion state locally
   const handleToggleCompletion = (habitId: string, date: string) => {
@@ -74,7 +79,7 @@ export function DashboardContent() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-              Good morning, Harsh 👋
+              Good morning, {userName} 👋
             </h1>
             <p className="mt-1 text-sm text-neutral-400">
               Stay consistent. Small actions become big results.
@@ -91,13 +96,17 @@ export function DashboardContent() {
 
         {/* Main Habit Tracker Grid or Empty State */}
         {habits.length === 0 ? (
-          <EmptyState onAddClick={() => handleAddHabit({
-            name: "New Habit",
-            icon: "✨",
-            color: "bg-blue-500/20 text-blue-400 border-blue-500/30",
-            frequency: "daily",
-            isArchived: false,
-          })} />
+          <EmptyState
+            onAddClick={() =>
+              handleAddHabit({
+                name: "New Habit",
+                icon: "✨",
+                color: "bg-blue-500/20 text-blue-400 border-blue-500/30",
+                frequency: "daily",
+                isArchived: false,
+              })
+            }
+          />
         ) : (
           <HabitTracker
             habits={habits}
