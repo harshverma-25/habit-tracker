@@ -1,9 +1,11 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Check, MoreHorizontal } from "lucide-react";
+import { Check, Edit2, Archive, Trash2, MoreVertical } from "lucide-react";
 import { Habit, DayInfo, HabitCompletion } from "@/types/habit";
+import { EditHabitDialog } from "@/components/EditHabitDialog";
+import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
 
 interface HabitTrackerProps {
   habits: Habit[];
@@ -11,6 +13,7 @@ interface HabitTrackerProps {
   weeks: { weekNumber: number; label: string; days: DayInfo[] }[];
   completions: HabitCompletion[];
   onToggleCompletion: (habitId: string, date: string) => void;
+  onEditHabit?: (updated: { id: string; name: string; description: string; icon: string; color: string }) => void;
   onArchiveHabit?: (habitId: string) => void;
   onDeleteHabit?: (habitId: string) => void;
 }
@@ -21,7 +24,14 @@ export function HabitTracker({
   weeks,
   completions,
   onToggleCompletion,
+  onEditHabit,
+  onArchiveHabit,
+  onDeleteHabit,
 }: HabitTrackerProps) {
+  const [activeMenuHabitId, setActiveMenuHabitId] = useState<string | null>(null);
+  const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
+  const [deletingHabit, setDeletingHabit] = useState<Habit | null>(null);
+
   // Helper to check if habit is completed on date
   const isCompleted = (habitId: string, date: string) => {
     return completions.some((c) => c.habitId === habitId && c.date === date && c.completed);
@@ -30,8 +40,7 @@ export function HabitTracker({
   // Helper to calculate progress percentage per habit
   const getHabitProgress = (habitId: string) => {
     const habitCompletions = completions.filter((c) => c.habitId === habitId && c.completed);
-    // prototype percentage based on 31 days
-    return Math.round((habitCompletions.length / 31) * 100);
+    return Math.round((habitCompletions.length / days.length) * 100);
   };
 
   return (
@@ -41,7 +50,7 @@ export function HabitTracker({
           <thead>
             {/* Top row: Week Headers */}
             <tr className="border-b border-neutral-800/80 bg-neutral-950/80">
-              <th className="sticky left-0 z-30 min-w-[220px] max-w-[260px] bg-neutral-950 px-4 py-3 text-xs font-semibold text-neutral-400 uppercase tracking-wider border-r border-neutral-800">
+              <th className="sticky left-0 z-30 min-w-[240px] max-w-[280px] bg-neutral-950 px-4 py-3 text-xs font-semibold text-neutral-400 uppercase tracking-wider border-r border-neutral-800">
                 Habit
               </th>
               {weeks.map((week) => (
@@ -97,14 +106,13 @@ export function HabitTracker({
           <tbody className="divide-y divide-neutral-800/60">
             {habits.map((habit) => {
               const progress = getHabitProgress(habit.id);
+              const isMenuOpen = activeMenuHabitId === habit.id;
+
               return (
-                <tr
-                  key={habit.id}
-                  className="group transition-colors hover:bg-neutral-800/30"
-                >
+                <tr key={habit.id} className="group transition-colors hover:bg-neutral-800/30">
                   {/* Sticky Habit Column */}
                   <td className="sticky left-0 z-30 bg-neutral-950 px-4 py-3 border-r border-neutral-800 shadow-md">
-                    <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-3 overflow-hidden">
                         <div
                           className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border ${habit.color}`}
@@ -123,13 +131,53 @@ export function HabitTracker({
                         </div>
                       </div>
 
-                      <div className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {/* Dropdown Action Menu */}
+                      <div className="relative shrink-0">
                         <button
+                          onClick={() => setActiveMenuHabitId(isMenuOpen ? null : habit.id)}
                           title="Options"
-                          className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-800 hover:text-white"
+                          className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-800 hover:text-white transition-colors"
                         >
-                          <MoreHorizontal className="h-4 w-4" />
+                          <MoreVertical className="h-4 w-4" />
                         </button>
+
+                        {isMenuOpen && (
+                          <div
+                            onMouseLeave={() => setActiveMenuHabitId(null)}
+                            className="absolute right-0 top-7 z-50 w-36 overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900 p-1 shadow-2xl animate-in fade-in zoom-in-95 duration-150"
+                          >
+                            <button
+                              onClick={() => {
+                                setActiveMenuHabitId(null);
+                                setEditingHabit(habit);
+                              }}
+                              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium text-neutral-300 hover:bg-neutral-800 hover:text-white"
+                            >
+                              <Edit2 className="h-3.5 w-3.5 text-blue-400" />
+                              <span>Edit</span>
+                            </button>
+                            <button
+                              onClick={() => {
+                                setActiveMenuHabitId(null);
+                                if (onArchiveHabit) onArchiveHabit(habit.id);
+                              }}
+                              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium text-amber-400 hover:bg-amber-500/10"
+                            >
+                              <Archive className="h-3.5 w-3.5" />
+                              <span>Archive</span>
+                            </button>
+                            <button
+                              onClick={() => {
+                                setActiveMenuHabitId(null);
+                                setDeletingHabit(habit);
+                              }}
+                              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium text-rose-400 hover:bg-rose-500/10"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                              <span>Delete</span>
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </td>
@@ -193,6 +241,32 @@ export function HabitTracker({
           </tbody>
         </table>
       </div>
+
+      {/* Edit Habit Modal */}
+      {editingHabit && (
+        <EditHabitDialog
+          habit={editingHabit}
+          isOpen={Boolean(editingHabit)}
+          onClose={() => setEditingHabit(null)}
+          onSave={(updated) => {
+            if (onEditHabit) onEditHabit(updated);
+            setEditingHabit(null);
+          }}
+        />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deletingHabit && (
+        <DeleteConfirmDialog
+          habitName={deletingHabit.name}
+          isOpen={Boolean(deletingHabit)}
+          onClose={() => setDeletingHabit(null)}
+          onConfirm={() => {
+            if (onDeleteHabit) onDeleteHabit(deletingHabit.id);
+            setDeletingHabit(null);
+          }}
+        />
+      )}
     </div>
   );
 }
