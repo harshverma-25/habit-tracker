@@ -16,6 +16,8 @@ export function DashboardContent() {
   const [habits, setHabits] = useState<Habit[]>([]);
   const [completions, setCompletions] = useState<HabitCompletion[]>([]);
   const [isFetchingHabits, setIsFetchingHabits] = useState<boolean>(false);
+  const [isFetchingCompletions, setIsFetchingCompletions] = useState<boolean>(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Dynamic Month & Year state (default to current date)
   const today = new Date();
@@ -25,6 +27,13 @@ export function DashboardContent() {
   // Generate dynamic calendar data for selected month/year
   const monthData = generateMonthData(currentYear, currentMonth, today);
 
+  // Show error toast message
+  const showErrorToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 4000);
+  };
+
+  // Fetch habits from MongoDB API
   useEffect(() => {
     let isMounted = true;
     if (session?.user) {
@@ -46,7 +55,29 @@ export function DashboardContent() {
     };
   }, [session]);
 
-  const loading = status === "loading" || isFetchingHabits;
+  // Fetch completions for the selected month/year from MongoDB API
+  useEffect(() => {
+    let isMounted = true;
+    if (session?.user) {
+      fetch(`/api/completions?year=${currentYear}&month=${currentMonth}`)
+        .then((res) => (res.ok ? res.json() : { completions: [] }))
+        .then((data) => {
+          if (isMounted) {
+            setCompletions(data.completions || []);
+            setIsFetchingCompletions(false);
+          }
+        })
+        .catch((err) => {
+          console.error("Error loading completions:", err);
+          if (isMounted) setIsFetchingCompletions(false);
+        });
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [session, currentYear, currentMonth]);
+
+  const loading = status === "loading" || isFetchingHabits || isFetchingCompletions;
 
   // Month navigation handlers
   const handlePrevMonth = () => {
@@ -84,9 +115,12 @@ export function DashboardContent() {
       if (res.ok) {
         const data = await res.json();
         setHabits((prev) => [...prev, data.habit]);
+      } else {
+        showErrorToast("Failed to create habit.");
       }
     } catch (err) {
       console.error("Error creating habit:", err);
+      showErrorToast("Network error creating habit.");
     }
   };
 
@@ -110,13 +144,16 @@ export function DashboardContent() {
         setHabits((prev) =>
           prev.map((h) => (h.id === updated.id ? data.habit : h))
         );
+      } else {
+        showErrorToast("Failed to update habit.");
       }
     } catch (err) {
       console.error("Error updating habit:", err);
+      showErrorToast("Network error updating habit.");
     }
   };
 
-  // Archive Habit via MongoDB API (Removes from active tracker view)
+  // Archive Habit via MongoDB API
   const handleArchiveHabit = async (habitId: string) => {
     try {
       const res = await fetch(`/api/habits/${habitId}`, {
@@ -127,13 +164,16 @@ export function DashboardContent() {
 
       if (res.ok) {
         setHabits((prev) => prev.filter((h) => h.id !== habitId));
+      } else {
+        showErrorToast("Failed to archive habit.");
       }
     } catch (err) {
       console.error("Error archiving habit:", err);
+      showErrorToast("Network error archiving habit.");
     }
   };
 
-  // Delete Habit via MongoDB API (Permanent)
+  // Delete Habit via MongoDB API
   const handleDeleteHabit = async (habitId: string) => {
     try {
       const res = await fetch(`/api/habits/${habitId}`, {
@@ -143,51 +183,101 @@ export function DashboardContent() {
       if (res.ok) {
         setHabits((prev) => prev.filter((h) => h.id !== habitId));
         setCompletions((prev) => prev.filter((c) => c.habitId !== habitId));
+      } else {
+        showErrorToast("Failed to delete habit.");
       }
     } catch (err) {
       console.error("Error deleting habit:", err);
+      showErrorToast("Network error deleting habit.");
     }
   };
 
-  // Local state toggle for check-ins (Phase 5 will persist completions)
-  const handleToggleCompletion = (habitId: string, date: string) => {
+  // Optimistic Checkbox Completion Toggle with MongoDB persistence and rollback
+  const handleToggleCompletion = async (habitId: string, date: string) => {
+    const existingIndex = completions.findIndex((c) => c.habitId === habitId && c.date === date);
+    const prevCompletions = [...completions];
+
+    let newCompletedState = true;
+    if (existingIndex > -1) {
+      newCompletedState = !completions[existingIndex].completed;
+    }
+
+    // 1. Optimistic UI update
     setCompletions((prev) => {
-      const existingIndex = prev.findIndex((c) => c.habitId === habitId && c.date === date);
       if (existingIndex > -1) {
-        const existing = prev[existingIndex];
         const updated = [...prev];
-        updated[existingIndex] = { ...existing, completed: !existing.completed };
+        updated[existingIndex] = { ...updated[existingIndex], completed: newCompletedState };
         return updated;
       } else {
         return [
           ...prev,
           {
-            id: `c-${Date.now()}`,
+            id: `temp-${Date.now()}`,
             habitId,
             date,
-            completed: true,
+            completed: newCompletedState,
           },
         ];
       }
     });
+
+    // 2. Persist to MongoDB API
+    try {
+      const res = await fetch("/api/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          habitId,
+          date,
+          completed: newCompletedState,
+        }),
+      });
+
+      if (!res.ok) {
+        // Rollback on failure
+        setCompletions(prevCompletions);
+        showErrorToast("Failed to save check-in. Changes reverted.");
+      } else {
+        const data = await res.json();
+        // Replace temp ID with database record ID
+        setCompletions((prev) =>
+          prev.map((c) => (c.habitId === habitId && c.date === date ? data.completion : c))
+        );
+      }
+    } catch (err) {
+      console.error("Error saving completion:", err);
+      // Rollback on network error
+      setCompletions(prevCompletions);
+      showErrorToast("Network error. Check-in reverted.");
+    }
   };
 
   const userName = session?.user?.name || "Harsh";
 
-  // Calculate stats from dynamic real habits
-  const activeHabitsCount = habits.filter((h) => !h.isArchived).length;
+  // Calculate dynamic stats from real completions
+  const activeHabitsCount = habits.length;
   const completedCheckinsCount = completions.filter((c) => c.completed).length;
 
   const currentStats = {
     totalHabits: activeHabitsCount,
     completedCheckins: completedCheckinsCount,
     currentStreak: activeHabitsCount > 0 ? 12 : 0,
-    overallProgress: activeHabitsCount > 0 ? 80 : 0,
+    overallProgress:
+      activeHabitsCount > 0 && monthData.totalDays > 0
+        ? Math.round((completedCheckinsCount / (activeHabitsCount * monthData.totalDays)) * 100)
+        : 0,
   };
 
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-100 flex flex-col font-sans">
       <Navbar />
+
+      {/* Toast Notification Container */}
+      {toastMessage && (
+        <div className="fixed bottom-5 right-5 z-50 rounded-xl border border-rose-500/40 bg-rose-950/90 px-4 py-3 text-sm font-semibold text-rose-200 shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-bottom-5">
+          {toastMessage}
+        </div>
+      )}
 
       <main className="flex-1 mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
         {/* Header */}
@@ -220,7 +310,7 @@ export function DashboardContent() {
           <div className="flex min-h-[300px] w-full items-center justify-center rounded-2xl border border-neutral-800 bg-neutral-900/30">
             <div className="flex items-center gap-3 text-neutral-400">
               <div className="h-5 w-5 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
-              <span className="text-sm font-medium">Loading habits from MongoDB...</span>
+              <span className="text-sm font-medium">Loading month tracker data...</span>
             </div>
           </div>
         ) : habits.length === 0 ? (
