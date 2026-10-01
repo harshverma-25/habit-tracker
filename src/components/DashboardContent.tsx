@@ -8,9 +8,9 @@ import { MonthSelector } from "@/components/MonthSelector";
 import { HabitTracker } from "@/components/HabitTracker";
 import { AddHabitDialog } from "@/components/AddHabitDialog";
 import { EmptyState } from "@/components/EmptyState";
+import { generateMonthData } from "@/lib/dates";
 import {
   MOCK_HABITS,
-  getOctober2026MonthData,
   INITIAL_MOCK_COMPLETIONS,
   MOCK_STATS,
 } from "@/lib/mockData";
@@ -20,7 +20,38 @@ export function DashboardContent() {
   const { data: session } = useSession();
   const [habits, setHabits] = useState<Habit[]>(MOCK_HABITS);
   const [completions, setCompletions] = useState<HabitCompletion[]>(INITIAL_MOCK_COMPLETIONS);
-  const monthData = getOctober2026MonthData();
+
+  // Dynamic Month & Year state (default to current date)
+  const today = new Date();
+  const [currentYear, setCurrentYear] = useState<number>(today.getFullYear());
+  const [currentMonth, setCurrentMonth] = useState<number>(today.getMonth() + 1); // 1-12
+
+  // Generate dynamic calendar data for selected month/year
+  const monthData = generateMonthData(currentYear, currentMonth, today);
+
+  // Month navigation handlers
+  const handlePrevMonth = () => {
+    if (currentMonth === 1) {
+      setCurrentMonth(12);
+      setCurrentYear((y) => y - 1);
+    } else {
+      setCurrentMonth((m) => m - 1);
+    }
+  };
+
+  const handleNextMonth = () => {
+    if (currentMonth === 12) {
+      setCurrentMonth(1);
+      setCurrentYear((y) => y + 1);
+    } else {
+      setCurrentMonth((m) => m + 1);
+    }
+  };
+
+  const handleSelectCurrentMonth = () => {
+    setCurrentYear(today.getFullYear());
+    setCurrentMonth(today.getMonth() + 1);
+  };
 
   // Dynamic user name from authenticated Google Session
   const userName = session?.user?.name || "Harsh";
@@ -91,8 +122,14 @@ export function DashboardContent() {
         {/* Statistics Cards */}
         <StatsCards stats={currentStats} />
 
-        {/* Month Selector */}
-        <MonthSelector monthName={monthData.monthName} year={monthData.year} />
+        {/* Dynamic Month Selector */}
+        <MonthSelector
+          monthName={monthData.monthName}
+          year={monthData.year}
+          onPrevMonth={handlePrevMonth}
+          onNextMonth={handleNextMonth}
+          onSelectCurrentMonth={handleSelectCurrentMonth}
+        />
 
         {/* Main Habit Tracker Grid or Empty State */}
         {habits.length === 0 ? (
