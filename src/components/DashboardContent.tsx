@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { Navbar } from "@/components/Navbar";
 import { StatsCards } from "@/components/StatsCards";
@@ -9,18 +9,20 @@ import { HabitTracker } from "@/components/HabitTracker";
 import { AddHabitDialog } from "@/components/AddHabitDialog";
 import { EmptyState } from "@/components/EmptyState";
 import { generateMonthData } from "@/lib/dates";
-import { Habit, HabitCompletion } from "@/types/habit";
+import { calculateHabitStreak, calculateMonthlyProgress } from "@/lib/calculations";
+import { Habit, HabitCompletion, HabitStats } from "@/types/habit";
 
 export function DashboardContent() {
   const { data: session, status } = useSession();
   const [habits, setHabits] = useState<Habit[]>([]);
   const [completions, setCompletions] = useState<HabitCompletion[]>([]);
+  const [allUserCompletions, setAllUserCompletions] = useState<HabitCompletion[]>([]);
   const [isFetchingHabits, setIsFetchingHabits] = useState<boolean>(false);
   const [isFetchingCompletions, setIsFetchingCompletions] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Dynamic Month & Year state (default to current date)
-  const today = new Date();
+  const today = useMemo(() => new Date(), []);
   const [currentYear, setCurrentYear] = useState<number>(today.getFullYear());
   const [currentMonth, setCurrentMonth] = useState<number>(today.getMonth() + 1); // 1-12
 
@@ -33,7 +35,7 @@ export function DashboardContent() {
     setTimeout(() => setToastMessage(null), 4000);
   };
 
-  // Fetch habits from MongoDB API
+  // Fetch active habits from MongoDB API
   useEffect(() => {
     let isMounted = true;
     if (session?.user) {
@@ -55,7 +57,7 @@ export function DashboardContent() {
     };
   }, [session]);
 
-  // Fetch completions for the selected month/year from MongoDB API
+  // Fetch completions for selected month from MongoDB API
   useEffect(() => {
     let isMounted = true;
     if (session?.user) {
@@ -63,7 +65,14 @@ export function DashboardContent() {
         .then((res) => (res.ok ? res.json() : { completions: [] }))
         .then((data) => {
           if (isMounted) {
-            setCompletions(data.completions || []);
+            const loaded: HabitCompletion[] = data.completions || [];
+            setCompletions(loaded);
+            setAllUserCompletions((prev) => {
+              const map = new Map<string, HabitCompletion>();
+              prev.forEach((c) => map.set(`${c.habitId}_${c.date}`, c));
+              loaded.forEach((c) => map.set(`${c.habitId}_${c.date}`, c));
+              return Array.from(map.values());
+            });
             setIsFetchingCompletions(false);
           }
         })
@@ -183,6 +192,7 @@ export function DashboardContent() {
       if (res.ok) {
         setHabits((prev) => prev.filter((h) => h.id !== habitId));
         setCompletions((prev) => prev.filter((c) => c.habitId !== habitId));
+        setAllUserCompletions((prev) => prev.filter((c) => c.habitId !== habitId));
       } else {
         showErrorToast("Failed to delete habit.");
       }
@@ -192,7 +202,7 @@ export function DashboardContent() {
     }
   };
 
-  // Optimistic Checkbox Completion Toggle with MongoDB persistence and rollback
+  // Optimistic Checkbox Completion Toggle with real-time stats update and rollback
   const handleToggleCompletion = async (habitId: string, date: string) => {
     const existingIndex = completions.findIndex((c) => c.habitId === habitId && c.date === date);
     const prevCompletions = [...completions];
@@ -202,22 +212,32 @@ export function DashboardContent() {
       newCompletedState = !completions[existingIndex].completed;
     }
 
+    const updatedRecord: HabitCompletion = {
+      id: existingIndex > -1 ? completions[existingIndex].id : `temp-${Date.now()}`,
+      habitId,
+      date,
+      completed: newCompletedState,
+    };
+
     // 1. Optimistic UI update
     setCompletions((prev) => {
       if (existingIndex > -1) {
         const updated = [...prev];
-        updated[existingIndex] = { ...updated[existingIndex], completed: newCompletedState };
+        updated[existingIndex] = updatedRecord;
         return updated;
       } else {
-        return [
-          ...prev,
-          {
-            id: `temp-${Date.now()}`,
-            habitId,
-            date,
-            completed: newCompletedState,
-          },
-        ];
+        return [...prev, updatedRecord];
+      }
+    });
+
+    setAllUserCompletions((prev) => {
+      const idx = prev.findIndex((c) => c.habitId === habitId && c.date === date);
+      if (idx > -1) {
+        const updated = [...prev];
+        updated[idx] = updatedRecord;
+        return updated;
+      } else {
+        return [...prev, updatedRecord];
       }
     });
 
@@ -234,19 +254,19 @@ export function DashboardContent() {
       });
 
       if (!res.ok) {
-        // Rollback on failure
         setCompletions(prevCompletions);
         showErrorToast("Failed to save check-in. Changes reverted.");
       } else {
         const data = await res.json();
-        // Replace temp ID with database record ID
         setCompletions((prev) =>
+          prev.map((c) => (c.habitId === habitId && c.date === date ? data.completion : c))
+        );
+        setAllUserCompletions((prev) =>
           prev.map((c) => (c.habitId === habitId && c.date === date ? data.completion : c))
         );
       }
     } catch (err) {
       console.error("Error saving completion:", err);
-      // Rollback on network error
       setCompletions(prevCompletions);
       showErrorToast("Network error. Check-in reverted.");
     }
@@ -254,19 +274,44 @@ export function DashboardContent() {
 
   const userName = session?.user?.name || "Harsh";
 
-  // Calculate dynamic stats from real completions
-  const activeHabitsCount = habits.length;
-  const completedCheckinsCount = completions.filter((c) => c.completed).length;
+  // Calculate dynamic stats instantly from state
+  const currentStats: HabitStats = useMemo(() => {
+    const activeHabits = habits.filter((h) => !h.isArchived);
+    if (activeHabits.length === 0) {
+      return { totalHabits: 0, completedCheckins: 0, currentStreak: 0, overallProgress: 0 };
+    }
 
-  const currentStats = {
-    totalHabits: activeHabitsCount,
-    completedCheckins: completedCheckinsCount,
-    currentStreak: activeHabitsCount > 0 ? 12 : 0,
-    overallProgress:
-      activeHabitsCount > 0 && monthData.totalDays > 0
-        ? Math.round((completedCheckinsCount / (activeHabitsCount * monthData.totalDays)) * 100)
-        : 0,
-  };
+    // Streak calculation across all active habits
+    let maxCurrentStreak = 0;
+    activeHabits.forEach((habit) => {
+      const completedDates = allUserCompletions
+        .filter((c) => c.habitId === habit.id && c.completed)
+        .map((c) => c.date);
+      const { currentStreak } = calculateHabitStreak(completedDates, today);
+      if (currentStreak > maxCurrentStreak) {
+        maxCurrentStreak = currentStreak;
+      }
+    });
+
+    // Monthly progress calculation considering creation date & future dates
+    const habitCreationList = activeHabits.map((h) => ({
+      id: h.id,
+      createdAt: h.createdAt,
+    }));
+
+    const { completedCheckins, overallProgress } = calculateMonthlyProgress(
+      habitCreationList,
+      completions,
+      monthData.days
+    );
+
+    return {
+      totalHabits: activeHabits.length,
+      completedCheckins,
+      currentStreak: maxCurrentStreak,
+      overallProgress,
+    };
+  }, [habits, completions, allUserCompletions, monthData.days, today]);
 
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-100 flex flex-col font-sans">
@@ -293,7 +338,7 @@ export function DashboardContent() {
           <AddHabitDialog onAddHabit={handleAddHabit} />
         </div>
 
-        {/* Statistics Cards */}
+        {/* Dynamic Statistics Cards */}
         <StatsCards stats={currentStats} />
 
         {/* Month Selector */}
@@ -305,12 +350,12 @@ export function DashboardContent() {
           onSelectCurrentMonth={handleSelectCurrentMonth}
         />
 
-        {/* Main Habit Tracker or Empty State */}
+        {/* Main Habit Tracker Grid or Empty State */}
         {loading ? (
           <div className="flex min-h-[300px] w-full items-center justify-center rounded-2xl border border-neutral-800 bg-neutral-900/30">
             <div className="flex items-center gap-3 text-neutral-400">
               <div className="h-5 w-5 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
-              <span className="text-sm font-medium">Loading month tracker data...</span>
+              <span className="text-sm font-medium">Loading habit tracker dashboard...</span>
             </div>
           </div>
         ) : habits.length === 0 ? (
