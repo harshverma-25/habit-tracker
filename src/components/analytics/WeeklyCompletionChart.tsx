@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
-import { BarChart2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface WeeklyCompletionChartProps {
   data: {
@@ -15,36 +14,30 @@ interface WeeklyCompletionChartProps {
 
 export function WeeklyCompletionChart({ data }: WeeklyCompletionChartProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-  const shouldReduceMotion = useReducedMotion();
 
-  const maxRate = Math.max(...data.map((d) => d.rate), 100);
+  const maxCompleted = Math.max(...data.map((d) => d.completed), 1);
 
   return (
     <div
       role="region"
       aria-label="Day of week completion activity chart"
-      className="flex flex-col justify-between rounded-2xl border border-neutral-800/90 bg-neutral-900/50 p-5 sm:p-6 backdrop-blur-md shadow-xl"
+      className="flex flex-col justify-between rounded-lg border border-neutral-800 bg-neutral-900 p-4 sm:p-5 shadow-xl"
     >
-      <div className="flex items-center justify-between border-b border-neutral-800/80 pb-4 mb-6">
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/30">
-            <BarChart2 className="h-5 w-5" />
-          </div>
-          <div>
-            <h3 className="text-base font-bold text-white tracking-tight">
-              Day of Week Activity
-            </h3>
-            <p className="text-xs text-neutral-400 font-medium">
-              Average check-in consistency across days
-            </p>
-          </div>
+      <div className="flex items-center justify-between border-b border-neutral-800 pb-3 mb-4">
+        <div>
+          <h3 className="text-sm font-bold text-white uppercase tracking-wider font-mono">
+            Weekly Activity
+          </h3>
+          <p className="text-xs text-neutral-400">
+            Habit check-ins by day of the week
+          </p>
         </div>
       </div>
 
-      {/* Bar Chart Grid */}
-      <div className="relative flex h-52 items-end justify-between gap-2 sm:gap-4 px-1 sm:px-2 pt-6 pb-2">
+      {/* Bar Chart Container */}
+      <div className="relative flex h-44 items-end justify-between gap-2 sm:gap-3 px-1 pt-4 pb-1">
         {data.map((item, idx) => {
-          const heightPercent = item.eligible > 0 ? (item.rate / maxRate) * 100 : 0;
+          const heightPercent = maxCompleted > 0 ? (item.completed / maxCompleted) * 100 : 0;
           const isHovered = hoveredIndex === idx;
 
           return (
@@ -54,45 +47,42 @@ export function WeeklyCompletionChart({ data }: WeeklyCompletionChartProps) {
               onMouseLeave={() => setHoveredIndex(null)}
               tabIndex={0}
               role="img"
-              aria-label={`${item.day}: ${item.rate}% completion rate (${item.completed} of ${item.eligible} check-ins)`}
-              className="relative flex flex-1 flex-col items-center h-full justify-end group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-xl"
+              aria-label={`${item.day}: ${item.completed} completed check-ins (${item.rate}%)`}
+              className="relative flex flex-1 flex-col items-center h-full justify-end group cursor-pointer focus-visible:outline-none"
             >
               {/* Tooltip */}
-              {isHovered && (
-                <motion.div
-                  initial={{ opacity: 0, y: 5, scale: 0.9 }}
-                  animate={{ opacity: 1, y: -5, scale: 1 }}
-                  className="absolute -top-12 z-30 flex flex-col items-center rounded-xl border border-neutral-700 bg-neutral-950 px-3 py-1.5 shadow-2xl backdrop-blur-md pointer-events-none whitespace-nowrap"
-                >
-                  <span className="text-xs font-bold text-white">
-                    {item.day}: {item.rate}%
-                  </span>
-                  <span className="text-[10px] text-neutral-400">
-                    {item.completed} / {item.eligible} check-ins
-                  </span>
-                </motion.div>
-              )}
+              <AnimatePresence>
+                {isHovered && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: -4 }}
+                    exit={{ opacity: 0, y: 4 }}
+                    transition={{ duration: 0.1 }}
+                    className="absolute -top-10 z-30 flex flex-col items-center rounded border border-neutral-700 bg-neutral-950 px-2.5 py-1 shadow-lg pointer-events-none whitespace-nowrap"
+                  >
+                    <span className="text-[11px] font-bold text-white font-mono">
+                      {item.day}: {item.completed} done ({item.rate}%)
+                    </span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
-              {/* Bar track container */}
-              <div className="relative w-full max-w-[40px] flex-1 rounded-xl bg-neutral-950/80 border border-neutral-800/60 overflow-hidden flex items-end p-1">
+              {/* Bar Track Container */}
+              <div className="relative w-full max-w-[36px] flex-1 rounded bg-neutral-950 border border-neutral-800 overflow-hidden flex items-end p-0.5">
                 <motion.div
-                  initial={shouldReduceMotion ? { height: `${heightPercent}%` } : { height: 0 }}
+                  initial={{ height: 0 }}
                   animate={{ height: `${heightPercent}%` }}
-                  transition={{ duration: 0.6, delay: idx * 0.05, ease: "easeOut" }}
-                  className={`w-full rounded-lg transition-all duration-300 ${
-                    item.rate >= 80
-                      ? "bg-gradient-to-t from-emerald-600 to-teal-400 shadow-md shadow-emerald-500/20"
-                      : item.rate >= 50
-                      ? "bg-gradient-to-t from-blue-600 to-indigo-400 shadow-md shadow-blue-500/20"
-                      : "bg-gradient-to-t from-purple-600 to-indigo-500 shadow-md shadow-purple-500/20"
-                  } ${isHovered ? "brightness-125 scale-x-105" : ""}`}
+                  transition={{ duration: 0.4, delay: idx * 0.03, ease: "easeOut" }}
+                  className={`w-full rounded-sm transition-colors ${
+                    isHovered ? "bg-white" : "bg-neutral-300"
+                  }`}
                 />
               </div>
 
-              {/* Label */}
+              {/* Day Label */}
               <span
-                className={`mt-3 text-xs font-bold transition-colors ${
-                  isHovered ? "text-blue-400" : "text-neutral-400"
+                className={`mt-2 text-[11px] font-mono font-semibold transition-colors ${
+                  isHovered ? "text-white" : "text-neutral-400"
                 }`}
               >
                 {item.day}
@@ -102,11 +92,12 @@ export function WeeklyCompletionChart({ data }: WeeklyCompletionChartProps) {
         })}
       </div>
 
-      <div className="mt-4 flex items-center justify-between border-t border-neutral-800/60 pt-3 text-[11px] font-semibold text-neutral-400">
-        <span>0%</span>
-        <span>50%</span>
-        <span>100% Target</span>
+      <div className="mt-3 flex items-center justify-between border-t border-neutral-800 pt-2 text-[10px] font-mono text-neutral-500">
+        <span>0</span>
+        <span>{Math.round(maxCompleted / 2)}</span>
+        <span>{maxCompleted} max</span>
       </div>
     </div>
   );
 }
+
