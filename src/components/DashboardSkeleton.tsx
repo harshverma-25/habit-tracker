@@ -28,6 +28,7 @@ export function DashboardSkeleton() {
             <div className="h-5 w-12 rounded bg-neutral-900 shrink-0" />
           </div>
         ))}
+        
       </div>
     </div>
   );
