@@ -16,6 +16,13 @@ export const authOptions: NextAuthOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+      authorization: {
+        params: {
+          prompt: "select_account",
+          access_type: "offline",
+          response_type: "code",
+        },
+      },
     }),
   ],
   session: {
@@ -50,15 +57,15 @@ export const authOptions: NextAuthOptions = {
           }
         } catch (error) {
           console.error("Error persisting user to MongoDB during sign in:", error);
-          // Allow sign in even if DB sync fails temporarily
+          // Allow sign in to succeed even if DB sync encounters temporary error
           return true;
         }
       }
       return true;
     },
     async session({ session, token }) {
-      if (session.user && token.sub) {
-        session.user.id = token.sub;
+      if (session.user) {
+        session.user.id = (token.id || token.sub) as string;
       }
       return session;
     },
@@ -71,6 +78,8 @@ export const authOptions: NextAuthOptions = {
   },
   pages: {
     signIn: "/login",
+    error: "/login",
   },
+  debug: process.env.NODE_ENV === "development",
   secret: process.env.NEXTAUTH_SECRET || "habitflow_default_secret_key_2026",
 };
