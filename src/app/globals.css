@@ -30,6 +30,7 @@ body {
   color: #ededed;
   font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
 /* Custom scrollbar for horizontal calendar grid */
@@ -39,15 +40,55 @@ body {
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: #121212;
+  background: rgba(18, 18, 18, 0.8);
   border-radius: 4px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: #262626;
   border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #3f3f46;
+}
+
+/* Glassmorphism helpers */
+.glass-panel {
+  background: rgba(23, 23, 23, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Shimmer Keyframe */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.03) 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.03) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* Reduced motion overrides */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

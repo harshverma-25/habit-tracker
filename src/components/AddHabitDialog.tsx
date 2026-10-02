@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { Plus, Sparkles, X } from "lucide-react";
 import { Habit } from "@/types/habit";
 
@@ -26,6 +27,19 @@ export function AddHabitDialog({ onAddHabit }: AddHabitModalProps) {
   const [icon, setIcon] = useState("📖");
   const [selectedColor, setSelectedColor] = useState(COLOR_OPTIONS[0]);
 
+  const shouldReduceMotion = useReducedMotion();
+
+  // Escape key handler
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isOpen) {
+        setIsOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
@@ -48,117 +62,153 @@ export function AddHabitDialog({ onAddHabit }: AddHabitModalProps) {
 
   return (
     <>
-      <button
+      <motion.button
+        whileHover={shouldReduceMotion ? {} : { scale: 1.03 }}
+        whileTap={shouldReduceMotion ? {} : { scale: 0.97 }}
         onClick={() => setIsOpen(true)}
-        className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-600/25 transition-all hover:from-blue-500 hover:to-indigo-500 hover:shadow-blue-500/35 active:scale-[0.98]"
+        className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-600/25 transition-all hover:shadow-blue-500/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
       >
         <Plus className="h-4 w-4" />
         <span>Add Habit</span>
-      </button>
+      </motion.button>
 
-      {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900 p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between border-b border-neutral-800 pb-4">
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-blue-400" />
-                <h3 className="text-lg font-bold text-white">Create New Habit</h3>
-              </div>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-800 hover:text-white"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
+      <AnimatePresence>
+        {isOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsOpen(false)}
+              className="fixed inset-0 bg-black/80 backdrop-blur-md"
+            />
 
-            <form onSubmit={handleSubmit} className="mt-4 space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-neutral-300 uppercase tracking-wider mb-1">
-                  Habit Name *
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Read 20 pages"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full rounded-xl border border-neutral-800 bg-neutral-950 px-3.5 py-2.5 text-sm text-white placeholder-neutral-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-neutral-300 uppercase tracking-wider mb-1">
-                  Description (Optional)
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Before going to bed"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="w-full rounded-xl border border-neutral-800 bg-neutral-950 px-3.5 py-2.5 text-sm text-white placeholder-neutral-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-neutral-300 uppercase tracking-wider mb-1">
-                  Select Icon
-                </label>
-                <div className="flex flex-wrap gap-2 pt-1">
-                  {EMOJI_OPTIONS.map((emoji) => (
-                    <button
-                      key={emoji}
-                      type="button"
-                      onClick={() => setIcon(emoji)}
-                      className={`flex h-9 w-9 items-center justify-center rounded-lg border text-lg transition-transform active:scale-95 ${
-                        icon === emoji
-                          ? "border-blue-500 bg-blue-500/20"
-                          : "border-neutral-800 bg-neutral-950 hover:bg-neutral-800"
-                      }`}
-                    >
-                      {emoji}
-                    </button>
-                  ))}
+            {/* Modal Box */}
+            <motion.div
+              initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.95, y: 15 }}
+              transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="add-habit-title"
+              className="relative z-10 w-full max-w-md overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900 p-6 shadow-2xl"
+            >
+              <div className="flex items-center justify-between border-b border-neutral-800/80 pb-4">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                    <Sparkles className="h-4.5 w-4.5" />
+                  </div>
+                  <h3 id="add-habit-title" className="text-lg font-bold text-white">
+                    Create New Habit
+                  </h3>
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-neutral-300 uppercase tracking-wider mb-1">
-                  Color Tag
-                </label>
-                <div className="flex gap-2.5 pt-1">
-                  {COLOR_OPTIONS.map((cClass) => (
-                    <button
-                      key={cClass}
-                      type="button"
-                      onClick={() => setSelectedColor(cClass)}
-                      className={`h-7 w-7 rounded-full border-2 transition-all ${cClass.split(" ")[0]} ${
-                        selectedColor === cClass ? "border-white scale-110" : "border-transparent opacity-70"
-                      }`}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              <div className="mt-6 flex items-center justify-end gap-3 border-t border-neutral-800 pt-4">
                 <button
-                  type="button"
                   onClick={() => setIsOpen(false)}
-                  className="rounded-xl border border-neutral-800 bg-neutral-950 px-4 py-2 text-sm font-medium text-neutral-300 hover:bg-neutral-800"
+                  aria-label="Close modal"
+                  className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-800 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                 >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="rounded-xl bg-blue-600 px-5 py-2 text-sm font-semibold text-white shadow-lg hover:bg-blue-500"
-                >
-                  Create Habit
+                  <X className="h-5 w-5" />
                 </button>
               </div>
-            </form>
+
+              <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-neutral-300 uppercase tracking-wider mb-1.5">
+                    Habit Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Read 20 pages"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="w-full rounded-xl border border-neutral-800 bg-neutral-950 px-3.5 py-2.5 text-sm text-white placeholder-neutral-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-neutral-300 uppercase tracking-wider mb-1.5">
+                    Description (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Before going to bed"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    className="w-full rounded-xl border border-neutral-800 bg-neutral-950 px-3.5 py-2.5 text-sm text-white placeholder-neutral-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-neutral-300 uppercase tracking-wider mb-1.5">
+                    Select Icon
+                  </label>
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {EMOJI_OPTIONS.map((emoji) => (
+                      <motion.button
+                        key={emoji}
+                        type="button"
+                        whileHover={shouldReduceMotion ? {} : { scale: 1.1 }}
+                        whileTap={shouldReduceMotion ? {} : { scale: 0.9 }}
+                        onClick={() => setIcon(emoji)}
+                        className={`flex h-9 w-9 items-center justify-center rounded-xl border text-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
+                          icon === emoji
+                            ? "border-blue-500 bg-blue-500/20 shadow-md shadow-blue-500/20"
+                            : "border-neutral-800 bg-neutral-950 hover:bg-neutral-800 text-neutral-300"
+                        }`}
+                      >
+                        {emoji}
+                      </motion.button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-neutral-300 uppercase tracking-wider mb-1.5">
+                    Color Tag
+                  </label>
+                  <div className="flex gap-2.5 pt-1">
+                    {COLOR_OPTIONS.map((cClass) => (
+                      <motion.button
+                        key={cClass}
+                        type="button"
+                        whileHover={shouldReduceMotion ? {} : { scale: 1.15 }}
+                        whileTap={shouldReduceMotion ? {} : { scale: 0.95 }}
+                        onClick={() => setSelectedColor(cClass)}
+                        className={`h-7 w-7 rounded-full border-2 transition-all ${cClass.split(" ")[0]} ${
+                          selectedColor === cClass
+                            ? "border-white scale-110 shadow-lg shadow-white/20"
+                            : "border-transparent opacity-70 hover:opacity-100"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                <div className="mt-6 flex items-center justify-end gap-3 border-t border-neutral-800/80 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setIsOpen(false)}
+                    className="rounded-xl border border-neutral-800 bg-neutral-950 px-4 py-2 text-sm font-semibold text-neutral-300 hover:bg-neutral-800 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                  >
+                    Cancel
+                  </button>
+                  <motion.button
+                    whileHover={shouldReduceMotion ? {} : { scale: 1.02 }}
+                    whileTap={shouldReduceMotion ? {} : { scale: 0.98 }}
+                    type="submit"
+                    className="rounded-xl bg-blue-600 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-blue-600/20 hover:bg-blue-500 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                  >
+                    Create Habit
+                  </motion.button>
+                </div>
+              </form>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
     </>
   );
 }

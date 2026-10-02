@@ -1,13 +1,16 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useSession } from "next-auth/react";
+import { motion, useReducedMotion } from "framer-motion";
 import { Navbar } from "@/components/Navbar";
 import { StatsCards } from "@/components/StatsCards";
 import { MonthSelector } from "@/components/MonthSelector";
 import { HabitTracker } from "@/components/HabitTracker";
 import { AddHabitDialog } from "@/components/AddHabitDialog";
 import { EmptyState } from "@/components/EmptyState";
+import { DashboardSkeleton } from "@/components/DashboardSkeleton";
+import { Toast, ToastMessage } from "@/components/Toast";
 import { generateMonthData } from "@/lib/dates";
 import { calculateHabitStreak, calculateMonthlyProgress } from "@/lib/calculations";
 import { Habit, HabitCompletion, HabitStats } from "@/types/habit";
@@ -19,7 +22,9 @@ export function DashboardContent() {
   const [allUserCompletions, setAllUserCompletions] = useState<HabitCompletion[]>([]);
   const [isFetchingHabits, setIsFetchingHabits] = useState<boolean>(false);
   const [isFetchingCompletions, setIsFetchingCompletions] = useState<boolean>(false);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toast, setToast] = useState<ToastMessage | null>(null);
+
+  const shouldReduceMotion = useReducedMotion();
 
   // Dynamic Month & Year state (default to current date)
   const today = useMemo(() => new Date(), []);
@@ -29,16 +34,23 @@ export function DashboardContent() {
   // Generate dynamic calendar data for selected month/year
   const monthData = generateMonthData(currentYear, currentMonth, today);
 
-  // Show error toast message
-  const showErrorToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 4000);
-  };
+  // Helper toast trigger
+  const showToast = useCallback((type: "success" | "error" | "info", message: string, title?: string) => {
+    setToast({
+      id: `toast-${Date.now()}`,
+      type,
+      title,
+      message,
+    });
+  }, []);
 
   // Fetch active habits from MongoDB API
   useEffect(() => {
     let isMounted = true;
     if (session?.user) {
+      Promise.resolve().then(() => {
+        if (isMounted) setIsFetchingHabits(true);
+      });
       fetch("/api/habits")
         .then((res) => (res.ok ? res.json() : { habits: [] }))
         .then((data) => {
@@ -61,6 +73,9 @@ export function DashboardContent() {
   useEffect(() => {
     let isMounted = true;
     if (session?.user) {
+      Promise.resolve().then(() => {
+        if (isMounted) setIsFetchingCompletions(true);
+      });
       fetch(`/api/completions?year=${currentYear}&month=${currentMonth}`)
         .then((res) => (res.ok ? res.json() : { completions: [] }))
         .then((data) => {
@@ -86,7 +101,7 @@ export function DashboardContent() {
     };
   }, [session, currentYear, currentMonth]);
 
-  const loading = status === "loading" || isFetchingHabits || isFetchingCompletions;
+  const loading = status === "loading" || isFetchingHabits;
 
   // Month navigation handlers
   const handlePrevMonth = () => {
@@ -124,12 +139,13 @@ export function DashboardContent() {
       if (res.ok) {
         const data = await res.json();
         setHabits((prev) => [...prev, data.habit]);
+        showToast("success", `"${newHabitData.name}" added to your habits.`, "Habit Created");
       } else {
-        showErrorToast("Failed to create habit.");
+        showToast("error", "Failed to create habit.", "Error");
       }
     } catch (err) {
       console.error("Error creating habit:", err);
-      showErrorToast("Network error creating habit.");
+      showToast("error", "Network error creating habit.", "Network Error");
     }
   };
 
@@ -153,18 +169,20 @@ export function DashboardContent() {
         setHabits((prev) =>
           prev.map((h) => (h.id === updated.id ? data.habit : h))
         );
+        showToast("success", `"${updated.name}" updated.`, "Habit Updated");
       } else {
-        showErrorToast("Failed to update habit.");
+        showToast("error", "Failed to update habit.", "Error");
       }
     } catch (err) {
       console.error("Error updating habit:", err);
-      showErrorToast("Network error updating habit.");
+      showToast("error", "Network error updating habit.", "Network Error");
     }
   };
 
   // Archive Habit via MongoDB API
   const handleArchiveHabit = async (habitId: string) => {
     try {
+      const targetHabit = habits.find((h) => h.id === habitId);
       const res = await fetch(`/api/habits/${habitId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -173,18 +191,20 @@ export function DashboardContent() {
 
       if (res.ok) {
         setHabits((prev) => prev.filter((h) => h.id !== habitId));
+        showToast("info", `"${targetHabit?.name || "Habit"}" archived. Historical data preserved.`, "Habit Archived");
       } else {
-        showErrorToast("Failed to archive habit.");
+        showToast("error", "Failed to archive habit.", "Error");
       }
     } catch (err) {
       console.error("Error archiving habit:", err);
-      showErrorToast("Network error archiving habit.");
+      showToast("error", "Network error archiving habit.", "Network Error");
     }
   };
 
   // Delete Habit via MongoDB API
   const handleDeleteHabit = async (habitId: string) => {
     try {
+      const targetHabit = habits.find((h) => h.id === habitId);
       const res = await fetch(`/api/habits/${habitId}`, {
         method: "DELETE",
       });
@@ -193,12 +213,13 @@ export function DashboardContent() {
         setHabits((prev) => prev.filter((h) => h.id !== habitId));
         setCompletions((prev) => prev.filter((c) => c.habitId !== habitId));
         setAllUserCompletions((prev) => prev.filter((c) => c.habitId !== habitId));
+        showToast("success", `"${targetHabit?.name || "Habit"}" deleted.`, "Habit Deleted");
       } else {
-        showErrorToast("Failed to delete habit.");
+        showToast("error", "Failed to delete habit.", "Error");
       }
     } catch (err) {
       console.error("Error deleting habit:", err);
-      showErrorToast("Network error deleting habit.");
+      showToast("error", "Network error deleting habit.", "Network Error");
     }
   };
 
@@ -255,7 +276,7 @@ export function DashboardContent() {
 
       if (!res.ok) {
         setCompletions(prevCompletions);
-        showErrorToast("Failed to save check-in. Changes reverted.");
+        showToast("error", "Failed to save check-in. Changes reverted.", "Check-in Error");
       } else {
         const data = await res.json();
         setCompletions((prev) =>
@@ -268,7 +289,7 @@ export function DashboardContent() {
     } catch (err) {
       console.error("Error saving completion:", err);
       setCompletions(prevCompletions);
-      showErrorToast("Network error. Check-in reverted.");
+      showToast("error", "Network error. Check-in reverted.", "Check-in Error");
     }
   };
 
@@ -314,74 +335,81 @@ export function DashboardContent() {
   }, [habits, completions, allUserCompletions, monthData.days, today]);
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-neutral-100 flex flex-col font-sans">
+    <div className="min-h-screen bg-neutral-950 text-neutral-100 flex flex-col font-sans selection:bg-blue-500 selection:text-white">
       <Navbar />
 
-      {/* Toast Notification Container */}
-      {toastMessage && (
-        <div className="fixed bottom-5 right-5 z-50 rounded-xl border border-rose-500/40 bg-rose-950/90 px-4 py-3 text-sm font-semibold text-rose-200 shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-bottom-5">
-          {toastMessage}
-        </div>
-      )}
+      {/* Animated Toast Notification */}
+      <Toast toast={toast} onClose={() => setToast(null)} />
 
       <main className="flex-1 mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
-        {/* Header */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-              Good morning, {userName} 👋
-            </h1>
-            <p className="mt-1 text-sm text-neutral-400">
-              Stay consistent. Small actions become big results.
-            </p>
-          </div>
-          <AddHabitDialog onAddHabit={handleAddHabit} />
-        </div>
-
-        {/* Dynamic Statistics Cards */}
-        <StatsCards stats={currentStats} />
-
-        {/* Month Selector */}
-        <MonthSelector
-          monthName={monthData.monthName}
-          year={monthData.year}
-          onPrevMonth={handlePrevMonth}
-          onNextMonth={handleNextMonth}
-          onSelectCurrentMonth={handleSelectCurrentMonth}
-        />
-
-        {/* Main Habit Tracker Grid or Empty State */}
         {loading ? (
-          <div className="flex min-h-[300px] w-full items-center justify-center rounded-2xl border border-neutral-800 bg-neutral-900/30">
-            <div className="flex items-center gap-3 text-neutral-400">
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
-              <span className="text-sm font-medium">Loading habit tracker dashboard...</span>
-            </div>
-          </div>
-        ) : habits.length === 0 ? (
-          <EmptyState
-            onAddClick={() =>
-              handleAddHabit({
-                name: "Read a book",
-                description: "20 pages every day",
-                icon: "📖",
-                color: "bg-blue-500/20 text-blue-400 border-blue-500/30",
-                frequency: "daily",
-                isArchived: false,
-              })
-            }
-          />
+          <DashboardSkeleton />
         ) : (
-          <HabitTracker
-            habits={habits}
-            days={monthData.days}
-            weeks={monthData.weeks}
-            completions={completions}
-            onToggleCompletion={handleToggleCompletion}
-            onEditHabit={handleEditHabit}
-            onArchiveHabit={handleArchiveHabit}
-            onDeleteHabit={handleDeleteHabit}
-          />
+          <motion.div
+            initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, ease: "easeOut" }}
+            className="space-y-8"
+          >
+            {/* Header */}
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+                  Good morning, {userName} 👋
+                </h1>
+                <p className="mt-1 text-sm font-medium text-neutral-400">
+                  Stay consistent. Small actions become big results.
+                </p>
+              </div>
+              <AddHabitDialog onAddHabit={handleAddHabit} />
+            </div>
+
+            {/* Dynamic Statistics Cards */}
+            <StatsCards stats={currentStats} />
+
+            {/* Month Selector */}
+            <MonthSelector
+              monthName={monthData.monthName}
+              year={monthData.year}
+              onPrevMonth={handlePrevMonth}
+              onNextMonth={handleNextMonth}
+              onSelectCurrentMonth={handleSelectCurrentMonth}
+            />
+
+            {/* Main Habit Tracker Grid or Empty State */}
+            {isFetchingCompletions && habits.length > 0 ? (
+              <div className="rounded-2xl border border-neutral-800/80 bg-neutral-900/40 p-8 text-center backdrop-blur-md">
+                <div className="flex items-center justify-center gap-3 text-neutral-400">
+                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
+                  <span className="text-sm font-medium">Updating month calendar...</span>
+                </div>
+              </div>
+            ) : habits.length === 0 ? (
+              <EmptyState
+                onAddClick={() =>
+                  handleAddHabit({
+                    name: "Read a book",
+                    description: "20 pages every day",
+                    icon: "📖",
+                    color: "bg-blue-500/20 text-blue-400 border-blue-500/30",
+                    frequency: "daily",
+                    isArchived: false,
+                  })
+                }
+              />
+            ) : (
+              <HabitTracker
+                habits={habits}
+                days={monthData.days}
+                weeks={monthData.weeks}
+                completions={completions}
+                onToggleCompletion={handleToggleCompletion}
+                onEditHabit={handleEditHabit}
+                onArchiveHabit={handleArchiveHabit}
+                onDeleteHabit={handleDeleteHabit}
+              />
+            )}
+          </motion.div>
         )}
       </main>
     </div>
