@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import mongoose from "mongoose";
-import { authOptions } from "@/lib/auth";
+import { authOptions, getUserIdFromSession } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/mongodb";
 import { HabitCompletionModel } from "@/models/HabitCompletion";
 import { HabitModel } from "@/models/Habit";
-import { UserModel } from "@/models/User";
 
 // GET /api/completions?year=2026&month=10 — Fetch completions for authenticated user for specified month
 export async function GET(request: Request) {
@@ -13,6 +12,11 @@ export async function GET(request: Request) {
     const session = await getServerSession(authOptions);
     if (!session || !session.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const userId = await getUserIdFromSession(session);
+    if (!userId) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     const { searchParams } = new URL(request.url);
@@ -35,16 +39,13 @@ export async function GET(request: Request) {
     const endDate = `${year}-${month.toString().padStart(2, "0")}-${daysInMonth.toString().padStart(2, "0")}`;
 
     await connectToDatabase();
-    const user = await UserModel.findOne({ email: session.user.email });
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    // Query completion records filtered strictly by userId and month date range
+    // Query completion records filtered strictly by userId and month date range with field projection
     const completions = await HabitCompletionModel.find({
-      userId: user._id,
+      userId,
       date: { $gte: startDate, $lte: endDate },
-    }).lean();
+    })
+      .select("_id habitId date completed")
+      .lean();
 
     const formattedCompletions = completions.map((c) => ({
       id: c._id.toString(),
@@ -68,6 +69,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const userId = await getUserIdFromSession(session);
+    if (!userId) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
     const body = await request.json();
     const { habitId, date, completed } = body;
 
@@ -85,22 +91,17 @@ export async function POST(request: Request) {
     }
 
     await connectToDatabase();
-    const user = await UserModel.findOne({ email: session.user.email });
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    // Verify habit ownership
-    const habit = await HabitModel.findOne({ _id: habitId, userId: user._id });
-    if (!habit) {
+    // Verify habit ownership quickly with exists query
+    const habitExists = await HabitModel.exists({ _id: habitId, userId });
+    if (!habitExists) {
       return NextResponse.json({ error: "Habit not found or unauthorized" }, { status: 404 });
     }
 
     // Upsert completion record using user isolation and unique compound key
     const result = await HabitCompletionModel.findOneAndUpdate(
-      { userId: user._id, habitId, date },
+      { userId, habitId, date },
       { $set: { completed } },
-      { upsert: true, new: true }
+      { upsert: true, new: true, select: "_id habitId date completed" }
     );
 
     return NextResponse.json({

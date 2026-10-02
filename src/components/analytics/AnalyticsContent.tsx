@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { Navbar } from "@/components/Navbar";
 import { MonthSelector } from "@/components/MonthSelector";
@@ -57,44 +57,51 @@ interface AnalyticsData {
   }[];
 }
 
-export function AnalyticsContent() {
+interface AnalyticsContentProps {
+  initialData?: AnalyticsData | null;
+}
+
+export function AnalyticsContent({ initialData }: AnalyticsContentProps = {}) {
   const { data: session, status } = useSession();
   const router = useRouter();
 
   const today = useMemo(() => new Date(), []);
   const [currentYear, setCurrentYear] = useState<number>(today.getFullYear());
   const [currentMonth, setCurrentMonth] = useState<number>(today.getMonth() + 1);
-  const [data, setData] = useState<AnalyticsData | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [data, setData] = useState<AnalyticsData | null>(initialData || null);
+  const [isLoading, setIsLoading] = useState<boolean>(!initialData);
 
   // Month navigation handlers
-  const handlePrevMonth = () => {
+  const handlePrevMonth = useCallback(() => {
     if (currentMonth === 1) {
       setCurrentMonth(12);
       setCurrentYear((y) => y - 1);
     } else {
       setCurrentMonth((m) => m - 1);
     }
-  };
+  }, [currentMonth]);
 
-  const handleNextMonth = () => {
+  const handleNextMonth = useCallback(() => {
     if (currentMonth === 12) {
       setCurrentMonth(1);
       setCurrentYear((y) => y + 1);
     } else {
       setCurrentMonth((m) => m + 1);
     }
-  };
+  }, [currentMonth]);
 
-  const handleSelectCurrentMonth = () => {
+  const handleSelectCurrentMonth = useCallback(() => {
     setCurrentYear(today.getFullYear());
     setCurrentMonth(today.getMonth() + 1);
-  };
+  }, [today]);
 
-  // Fetch analytics data from MongoDB API
+  // Fetch analytics data from MongoDB API when month/year changes
   useEffect(() => {
     let isMounted = true;
-    if (session?.user) {
+    const isInitialMonth =
+      currentYear === today.getFullYear() && currentMonth === today.getMonth() + 1;
+
+    if (session?.user && (!isInitialMonth || !initialData)) {
       Promise.resolve().then(() => {
         if (isMounted) setIsLoading(true);
       });
@@ -114,7 +121,7 @@ export function AnalyticsContent() {
     return () => {
       isMounted = false;
     };
-  }, [session, currentYear, currentMonth]);
+  }, [session, currentYear, currentMonth, initialData, today]);
 
   const loading = status === "loading" || isLoading;
 

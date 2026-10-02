@@ -8,7 +8,7 @@ import { useSession, signIn, signOut } from "next-auth/react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { LayoutDashboard, BarChart3, LogOut, LogIn, Menu, X } from "lucide-react";
 
-export function Navbar() {
+export const Navbar = React.memo(function Navbar() {
   const { data: session } = useSession();
   const shouldReduceMotion = useReducedMotion();
   const pathname = usePathname();
@@ -215,5 +215,5 @@ export function Navbar() {
       </AnimatePresence>
     </header>
   );
-}
+});
 

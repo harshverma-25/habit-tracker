@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
+import { getInitialDashboardData } from "@/lib/data-fetchers";
 import { DashboardContent } from "@/components/DashboardContent";
 
 export default async function DashboardPage() {
@@ -10,5 +11,12 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  return <DashboardContent />;
+  const { initialHabits, initialCompletions } = await getInitialDashboardData(session);
+
+  return (
+    <DashboardContent
+      initialHabits={initialHabits}
+      initialCompletions={initialCompletions}
+    />
+  );
 }

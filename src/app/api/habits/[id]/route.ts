@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import mongoose from "mongoose";
-import { authOptions } from "@/lib/auth";
+import { authOptions, getUserIdFromSession } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/mongodb";
 import { HabitModel } from "@/models/Habit";
 import { HabitCompletionModel } from "@/models/HabitCompletion";
-import { UserModel } from "@/models/User";
 
 // PATCH /api/habits/[id] — Edit or archive a habit for authenticated user
 export async function PATCH(
@@ -18,6 +17,11 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const userId = await getUserIdFromSession(session);
+    if (!userId) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
     const { id } = await params;
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json({ error: "Invalid habit ID" }, { status: 400 });
@@ -27,12 +31,7 @@ export async function PATCH(
     const { name, description, icon, color, isArchived } = body;
 
     await connectToDatabase();
-    const user = await UserModel.findOne({ email: session.user.email });
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    const habit = await HabitModel.findOne({ _id: id, userId: user._id });
+    const habit = await HabitModel.findOne({ _id: id, userId });
     if (!habit) {
       return NextResponse.json({ error: "Habit not found or unauthorized" }, { status: 404 });
     }
@@ -80,24 +79,24 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const userId = await getUserIdFromSession(session);
+    if (!userId) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
     const { id } = await params;
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json({ error: "Invalid habit ID" }, { status: 400 });
     }
 
     await connectToDatabase();
-    const user = await UserModel.findOne({ email: session.user.email });
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    const habit = await HabitModel.findOneAndDelete({ _id: id, userId: user._id });
+    const habit = await HabitModel.findOneAndDelete({ _id: id, userId });
     if (!habit) {
       return NextResponse.json({ error: "Habit not found or unauthorized" }, { status: 404 });
     }
 
-    // Production Hardening: Clean up all completion records associated with the deleted habit
-    await HabitCompletionModel.deleteMany({ habitId: id, userId: user._id });
+    // Clean up all completion records associated with the deleted habit
+    await HabitCompletionModel.deleteMany({ habitId: id, userId });
 
     return NextResponse.json({ message: "Habit and records deleted successfully", id });
   } catch (error) {

@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
+import { getInitialAnalyticsData } from "@/lib/data-fetchers";
 import { AnalyticsContent } from "@/components/analytics/AnalyticsContent";
 
 export default async function AnalyticsPage() {
@@ -10,5 +11,7 @@ export default async function AnalyticsPage() {
     redirect("/login");
   }
 
-  return <AnalyticsContent />;
+  const initialData = await getInitialAnalyticsData(session);
+
+  return <AnalyticsContent initialData={initialData} />;
 }

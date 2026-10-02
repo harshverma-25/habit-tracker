@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { authOptions, getUserIdFromSession } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/mongodb";
 import { HabitModel } from "@/models/Habit";
-import { UserModel } from "@/models/User";
 
 // GET /api/habits — Fetch active habits for authenticated user
 export async function GET() {
@@ -13,13 +12,14 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    await connectToDatabase();
-    const user = await UserModel.findOne({ email: session.user.email });
-    if (!user) {
+    const userId = await getUserIdFromSession(session);
+    if (!userId) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const habits = await HabitModel.find({ userId: user._id, isArchived: false })
+    await connectToDatabase();
+    const habits = await HabitModel.find({ userId, isArchived: false })
+      .select("_id name description icon color frequency isArchived createdAt updatedAt")
       .sort({ createdAt: 1 })
       .lean();
 
@@ -50,6 +50,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const userId = await getUserIdFromSession(session);
+    if (!userId) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
     const body = await request.json();
     const itemsToCreate = Array.isArray(body.habits)
       ? body.habits
@@ -68,13 +73,8 @@ export async function POST(request: Request) {
     }
 
     await connectToDatabase();
-    const user = await UserModel.findOne({ email: session.user.email });
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
     const docs = itemsToCreate.map((item: { name: string; description?: string; icon?: string; color?: string }) => ({
-      userId: user._id,
+      userId,
       name: item.name.trim(),
       description: item.description ? item.description.trim() : "",
       icon: item.icon || "📖",

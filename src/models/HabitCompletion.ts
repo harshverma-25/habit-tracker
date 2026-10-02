@@ -25,8 +25,8 @@ const HabitCompletionSchema = new Schema<IHabitCompletion>(
 // Compound unique index to prevent duplicate completion records for the same habit and date per user
 HabitCompletionSchema.index({ userId: 1, habitId: 1, date: 1 }, { unique: true });
 
-// Index for efficient monthly date range filtering
-HabitCompletionSchema.index({ userId: 1, date: 1 });
+// Index for efficient monthly date range filtering and covered completion lookups
+HabitCompletionSchema.index({ userId: 1, date: 1, completed: 1 });
 
 export const HabitCompletionModel: Model<IHabitCompletion> =
   mongoose.models.HabitCompletion ||

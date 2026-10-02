@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { authOptions, getUserIdFromSession } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/mongodb";
 import { HabitModel } from "@/models/Habit";
 import { HabitCompletionModel } from "@/models/HabitCompletion";
-import { UserModel } from "@/models/User";
 import { calculateHabitStreak, calculateMonthlyProgress } from "@/lib/calculations";
 import { generateMonthData } from "@/lib/dates";
 
@@ -16,6 +15,11 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const userId = await getUserIdFromSession(session);
+    if (!userId) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
     const { searchParams } = new URL(request.url);
     const yearStr = searchParams.get("year");
     const monthStr = searchParams.get("month");
@@ -25,19 +29,16 @@ export async function GET(request: Request) {
     const month = monthStr ? parseInt(monthStr, 10) : today.getMonth() + 1;
 
     await connectToDatabase();
-    const user = await UserModel.findOne({ email: session.user.email });
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
     // 1. Fetch active habits for user
-    const habits = await HabitModel.find({ userId: user._id, isArchived: false }).lean();
+    const habits = await HabitModel.find({ userId, isArchived: false })
+      .select("_id createdAt")
+      .lean();
     const totalHabits = habits.length;
 
-    // 2. Fetch all completion records for streak calculations
-    const allCompletions = await HabitCompletionModel.find({
-      userId: user._id,
-    }).lean();
+    // 2. Fetch completion records with field projection
+    const allCompletions = await HabitCompletionModel.find({ userId })
+      .select("habitId date completed -_id")
+      .lean();
 
     // Map completions by habitId -> array of completed date strings (YYYY-MM-DD)
     const habitCompletionsMap: Record<string, string[]> = {};

@@ -1,11 +1,20 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo, memo } from "react";
+import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, Edit2, Archive, Trash2, MoreVertical } from "lucide-react";
 import { Habit, DayInfo, HabitCompletion } from "@/types/habit";
-import { EditHabitDialog } from "@/components/EditHabitDialog";
-import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
+
+const EditHabitDialog = dynamic(
+  () => import("@/components/EditHabitDialog").then((mod) => mod.EditHabitDialog),
+  { ssr: false }
+);
+
+const DeleteConfirmDialog = dynamic(
+  () => import("@/components/DeleteConfirmDialog").then((mod) => mod.DeleteConfirmDialog),
+  { ssr: false }
+);
 
 interface HabitTrackerProps {
   habits: Habit[];
@@ -18,7 +27,7 @@ interface HabitTrackerProps {
   onDeleteHabit?: (habitId: string) => void;
 }
 
-export function HabitTracker({
+export const HabitTracker = memo(function HabitTracker({
   habits,
   days,
   weeks,
@@ -32,17 +41,35 @@ export function HabitTracker({
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
   const [deletingHabit, setDeletingHabit] = useState<Habit | null>(null);
 
+  // O(1) Constant-time lookup set for completion states
+  const completedSet = useMemo(() => {
+    const set = new Set<string>();
+    for (let i = 0; i < completions.length; i++) {
+      const c = completions[i];
+      if (c.completed) {
+        set.add(`${c.habitId}_${c.date}`);
+      }
+    }
+    return set;
+  }, [completions]);
 
-  // Helper to check if habit is completed on date
-  const isCompleted = (habitId: string, date: string) => {
-    return completions.some((c) => c.habitId === habitId && c.date === date && c.completed);
-  };
-
-  // Helper to calculate progress percentage per habit
-  const getHabitProgress = (habitId: string) => {
-    const habitCompletions = completions.filter((c) => c.habitId === habitId && c.completed);
-    return Math.round((habitCompletions.length / days.length) * 100);
-  };
+  // Precomputed habit progress percentage map
+  const habitProgressMap = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (let i = 0; i < completions.length; i++) {
+      const c = completions[i];
+      if (c.completed) {
+        counts[c.habitId] = (counts[c.habitId] || 0) + 1;
+      }
+    }
+    const map: Record<string, number> = {};
+    const totalDays = days.length || 1;
+    for (let i = 0; i < habits.length; i++) {
+      const hId = habits[i].id;
+      map[hId] = Math.round(((counts[hId] || 0) / totalDays) * 100);
+    }
+    return map;
+  }, [completions, days.length, habits]);
 
   return (
     <div className="w-full rounded-lg border border-neutral-800 bg-neutral-950 overflow-hidden shadow-xl">
@@ -111,7 +138,7 @@ export function HabitTracker({
 
           <tbody className="divide-y divide-neutral-800/80">
             {habits.map((habit) => {
-              const progress = getHabitProgress(habit.id);
+              const progress = habitProgressMap[habit.id] || 0;
               const isMenuOpen = activeMenuHabitId === habit.id;
 
               return (
@@ -196,7 +223,7 @@ export function HabitTracker({
 
                   {/* Day Checkboxes */}
                   {days.map((day) => {
-                    const checked = isCompleted(habit.id, day.date);
+                    const checked = completedSet.has(`${habit.id}_${day.date}`);
                     return (
                       <td
                         key={day.date}
@@ -274,5 +301,5 @@ export function HabitTracker({
       )}
     </div>
   );
-}
+});
 

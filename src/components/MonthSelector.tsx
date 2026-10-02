@@ -12,7 +12,7 @@ interface MonthSelectorProps {
   onSelectCurrentMonth?: () => void;
 }
 
-export function MonthSelector({
+export const MonthSelector = React.memo(function MonthSelector({
   monthName,
   year,
   onPrevMonth,
@@ -74,5 +74,5 @@ export function MonthSelector({
       </div>
     </div>
   );
-}
+});
 

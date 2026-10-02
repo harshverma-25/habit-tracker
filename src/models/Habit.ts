@@ -28,8 +28,8 @@ const HabitSchema = new Schema<IHabit>(
   }
 );
 
-// Compound index for efficient user habit lookups
-HabitSchema.index({ userId: 1, isArchived: 1 });
+// Compound index for efficient user habit lookups and sorted queries
+HabitSchema.index({ userId: 1, isArchived: 1, createdAt: 1 });
 
 export const HabitModel: Model<IHabit> =
   mongoose.models.Habit || mongoose.model<IHabit>("Habit", HabitSchema);
