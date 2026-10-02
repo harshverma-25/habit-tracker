@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { motion, useReducedMotion } from "framer-motion";
 import { Sparkles, LayoutDashboard, BarChart3, Settings, LogOut, LogIn } from "lucide-react";
@@ -10,6 +11,10 @@ import { Sparkles, LayoutDashboard, BarChart3, Settings, LogOut, LogIn } from "l
 export function Navbar() {
   const { data: session } = useSession();
   const shouldReduceMotion = useReducedMotion();
+  const pathname = usePathname();
+
+  const isDashboard = pathname === "/dashboard";
+  const isAnalytics = pathname === "/analytics";
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-neutral-800/80 bg-neutral-950/80 backdrop-blur-xl">
@@ -35,21 +40,27 @@ export function Navbar() {
         <nav className="flex items-center gap-1 sm:gap-2">
           <Link
             href="/dashboard"
-            className="flex items-center gap-2 rounded-xl bg-neutral-900/90 px-3.5 py-1.5 text-sm font-semibold text-white transition-all hover:bg-neutral-800 border border-neutral-700/60 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            className={`flex items-center gap-2 rounded-xl px-3.5 py-1.5 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
+              isDashboard
+                ? "bg-neutral-900/90 text-white border border-neutral-700/60 shadow-sm"
+                : "text-neutral-400 hover:bg-neutral-900/60 hover:text-neutral-200"
+            }`}
           >
-            <LayoutDashboard className="h-4 w-4 text-blue-400" />
+            <LayoutDashboard className={`h-4 w-4 ${isDashboard ? "text-blue-400" : "text-neutral-400"}`} />
             <span>Dashboard</span>
           </Link>
 
-          <button
-            disabled
-            title="Analytics (Phase 8)"
-            aria-label="Analytics (Coming soon)"
-            className="flex items-center gap-2 rounded-xl px-3.5 py-1.5 text-sm font-medium text-neutral-500 transition-colors cursor-not-allowed opacity-60"
+          <Link
+            href="/analytics"
+            className={`flex items-center gap-2 rounded-xl px-3.5 py-1.5 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
+              isAnalytics
+                ? "bg-neutral-900/90 text-white border border-neutral-700/60 shadow-sm"
+                : "text-neutral-400 hover:bg-neutral-900/60 hover:text-neutral-200"
+            }`}
           >
-            <BarChart3 className="h-4 w-4" />
+            <BarChart3 className={`h-4 w-4 ${isAnalytics ? "text-purple-400" : "text-neutral-400"}`} />
             <span className="hidden sm:inline">Analytics</span>
-          </button>
+          </Link>
 
           <button
             disabled
