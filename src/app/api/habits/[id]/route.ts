@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import mongoose from "mongoose";
 import { authOptions } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/mongodb";
 import { HabitModel } from "@/models/Habit";
+import { HabitCompletionModel } from "@/models/HabitCompletion";
 import { UserModel } from "@/models/User";
 
-// PATCH /api/habits/[id] — Edit or archive a habit
+// PATCH /api/habits/[id] — Edit or archive a habit for authenticated user
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -17,6 +19,10 @@ export async function PATCH(
     }
 
     const { id } = await params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json({ error: "Invalid habit ID" }, { status: 400 });
+    }
+
     const body = await request.json();
     const { name, description, icon, color, isArchived } = body;
 
@@ -28,13 +34,18 @@ export async function PATCH(
 
     const habit = await HabitModel.findOne({ _id: id, userId: user._id });
     if (!habit) {
-      return NextResponse.json({ error: "Habit not found" }, { status: 404 });
+      return NextResponse.json({ error: "Habit not found or unauthorized" }, { status: 404 });
     }
 
-    if (name !== undefined) habit.name = name.trim();
-    if (description !== undefined) habit.description = description.trim();
-    if (icon !== undefined) habit.icon = icon;
-    if (color !== undefined) habit.color = color;
+    if (name !== undefined) {
+      if (typeof name !== "string" || !name.trim()) {
+        return NextResponse.json({ error: "Habit name cannot be empty" }, { status: 400 });
+      }
+      habit.name = name.trim();
+    }
+    if (description !== undefined) habit.description = typeof description === "string" ? description.trim() : "";
+    if (icon !== undefined) habit.icon = typeof icon === "string" ? icon : "📖";
+    if (color !== undefined) habit.color = typeof color === "string" ? color : "";
     if (isArchived !== undefined) habit.isArchived = Boolean(isArchived);
 
     await habit.save();
@@ -58,7 +69,7 @@ export async function PATCH(
   }
 }
 
-// DELETE /api/habits/[id] — Permanent deletion of a habit
+// DELETE /api/habits/[id] — Permanent deletion of a habit & its associated completions
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -70,6 +81,9 @@ export async function DELETE(
     }
 
     const { id } = await params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json({ error: "Invalid habit ID" }, { status: 400 });
+    }
 
     await connectToDatabase();
     const user = await UserModel.findOne({ email: session.user.email });
@@ -79,10 +93,13 @@ export async function DELETE(
 
     const habit = await HabitModel.findOneAndDelete({ _id: id, userId: user._id });
     if (!habit) {
-      return NextResponse.json({ error: "Habit not found" }, { status: 404 });
+      return NextResponse.json({ error: "Habit not found or unauthorized" }, { status: 404 });
     }
 
-    return NextResponse.json({ message: "Habit deleted successfully", id });
+    // Production Hardening: Clean up all completion records associated with the deleted habit
+    await HabitCompletionModel.deleteMany({ habitId: id, userId: user._id });
+
+    return NextResponse.json({ message: "Habit and records deleted successfully", id });
   } catch (error) {
     console.error("DELETE /api/habits/[id] error:", error);
     return NextResponse.json({ error: "Failed to delete habit" }, { status: 500 });

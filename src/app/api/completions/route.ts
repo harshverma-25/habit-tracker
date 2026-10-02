@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import mongoose from "mongoose";
 import { authOptions } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/mongodb";
 import { HabitCompletionModel } from "@/models/HabitCompletion";
@@ -25,8 +26,11 @@ export async function GET(request: Request) {
     const year = parseInt(yearStr, 10);
     const month = parseInt(monthStr, 10);
 
+    if (isNaN(year) || isNaN(month) || month < 1 || month > 12) {
+      return NextResponse.json({ error: "Invalid year or month format" }, { status: 400 });
+    }
+
     const startDate = `${year}-${month.toString().padStart(2, "0")}-01`;
-    // Last day string calculation
     const daysInMonth = new Date(year, month, 0).getDate();
     const endDate = `${year}-${month.toString().padStart(2, "0")}-${daysInMonth.toString().padStart(2, "0")}`;
 
@@ -56,7 +60,7 @@ export async function GET(request: Request) {
   }
 }
 
-// POST /api/completions — Toggle completion record (create or update/delete)
+// POST /api/completions — Toggle completion record (create or update)
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -69,6 +73,15 @@ export async function POST(request: Request) {
 
     if (!habitId || !date || typeof completed !== "boolean") {
       return NextResponse.json({ error: "habitId, date, and completed status are required" }, { status: 400 });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(habitId)) {
+      return NextResponse.json({ error: "Invalid habit ID" }, { status: 400 });
+    }
+
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(date)) {
+      return NextResponse.json({ error: "Date must be in YYYY-MM-DD format" }, { status: 400 });
     }
 
     await connectToDatabase();
