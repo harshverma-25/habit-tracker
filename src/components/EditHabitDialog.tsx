@@ -78,12 +78,12 @@ export function EditHabitDialog({ habit, isOpen, onClose, onSave }: EditHabitMod
             role="dialog"
             aria-modal="true"
             aria-labelledby="edit-habit-title"
-            className="relative z-10 w-full max-w-md overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900 p-6 shadow-2xl"
+            className="relative z-10 w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl border border-neutral-800 bg-neutral-900 p-5 sm:p-6 shadow-2xl custom-scrollbar"
           >
             <div className="flex items-center justify-between border-b border-neutral-800/80 pb-4">
               <div className="flex items-center gap-2.5">
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                  <Edit2 className="h-4 w-4" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                  <Edit2 className="h-4.5 w-4.5" />
                 </div>
                 <h3 id="edit-habit-title" className="text-lg font-bold text-white">
                   Edit Habit
@@ -92,7 +92,7 @@ export function EditHabitDialog({ habit, isOpen, onClose, onSave }: EditHabitMod
               <button
                 onClick={onClose}
                 aria-label="Close modal"
-                className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-800 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                className="flex h-9 w-9 items-center justify-center rounded-lg text-neutral-400 hover:bg-neutral-800 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -100,29 +100,31 @@ export function EditHabitDialog({ habit, isOpen, onClose, onSave }: EditHabitMod
 
             <form onSubmit={handleSubmit} className="mt-4 space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-neutral-300 uppercase tracking-wider mb-1.5">
+                <label htmlFor="edit-habit-name-input" className="block text-xs font-semibold text-neutral-300 uppercase tracking-wider mb-1.5">
                   Habit Name *
                 </label>
                 <input
+                  id="edit-habit-name-input"
                   type="text"
                   required
                   placeholder="e.g. Read 20 pages"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full rounded-xl border border-neutral-800 bg-neutral-950 px-3.5 py-2.5 text-sm text-white placeholder-neutral-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all"
+                  className="w-full rounded-xl border border-neutral-800 bg-neutral-950 px-3.5 py-2.5 text-sm text-white placeholder-neutral-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-neutral-300 uppercase tracking-wider mb-1.5">
+                <label htmlFor="edit-habit-desc-input" className="block text-xs font-semibold text-neutral-300 uppercase tracking-wider mb-1.5">
                   Description
                 </label>
                 <input
+                  id="edit-habit-desc-input"
                   type="text"
                   placeholder="e.g. Before going to bed"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full rounded-xl border border-neutral-800 bg-neutral-950 px-3.5 py-2.5 text-sm text-white placeholder-neutral-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all"
+                  className="w-full rounded-xl border border-neutral-800 bg-neutral-950 px-3.5 py-2.5 text-sm text-white placeholder-neutral-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
                 />
               </div>
 
@@ -138,7 +140,8 @@ export function EditHabitDialog({ habit, isOpen, onClose, onSave }: EditHabitMod
                       whileHover={shouldReduceMotion ? {} : { scale: 1.1 }}
                       whileTap={shouldReduceMotion ? {} : { scale: 0.9 }}
                       onClick={() => setIcon(emoji)}
-                      className={`flex h-9 w-9 items-center justify-center rounded-xl border text-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
+                      aria-label={`Select icon ${emoji}`}
+                      className={`flex h-10 w-10 items-center justify-center rounded-xl border text-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
                         icon === emoji
                           ? "border-blue-500 bg-blue-500/20 shadow-md shadow-blue-500/20"
                           : "border-neutral-800 bg-neutral-950 hover:bg-neutral-800 text-neutral-300"
@@ -154,15 +157,16 @@ export function EditHabitDialog({ habit, isOpen, onClose, onSave }: EditHabitMod
                 <label className="block text-xs font-semibold text-neutral-300 uppercase tracking-wider mb-1.5">
                   Color Tag
                 </label>
-                <div className="flex gap-2.5 pt-1">
-                  {COLOR_OPTIONS.map((cClass) => (
+                <div className="flex gap-3 pt-1">
+                  {COLOR_OPTIONS.map((cClass, idx) => (
                     <motion.button
                       key={cClass}
                       type="button"
                       whileHover={shouldReduceMotion ? {} : { scale: 1.15 }}
                       whileTap={shouldReduceMotion ? {} : { scale: 0.95 }}
                       onClick={() => setSelectedColor(cClass)}
-                      className={`h-7 w-7 rounded-full border-2 transition-all ${cClass.split(" ")[0]} ${
+                      aria-label={`Select color option ${idx + 1}`}
+                      className={`h-8 w-8 rounded-full border-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white ${cClass.split(" ")[0]} ${
                         selectedColor === cClass
                           ? "border-white scale-110 shadow-lg shadow-white/20"
                           : "border-transparent opacity-70 hover:opacity-100"
@@ -176,7 +180,7 @@ export function EditHabitDialog({ habit, isOpen, onClose, onSave }: EditHabitMod
                 <button
                   type="button"
                   onClick={onClose}
-                  className="rounded-xl border border-neutral-800 bg-neutral-950 px-4 py-2 text-sm font-semibold text-neutral-300 hover:bg-neutral-800 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                  className="rounded-xl border border-neutral-800 bg-neutral-950 px-4 py-2.5 text-sm font-semibold text-neutral-300 hover:bg-neutral-800 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                 >
                   Cancel
                 </button>
@@ -184,7 +188,7 @@ export function EditHabitDialog({ habit, isOpen, onClose, onSave }: EditHabitMod
                   whileHover={shouldReduceMotion ? {} : { scale: 1.02 }}
                   whileTap={shouldReduceMotion ? {} : { scale: 0.98 }}
                   type="submit"
-                  className="rounded-xl bg-blue-600 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-blue-600/20 hover:bg-blue-500 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                  className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-600/20 hover:bg-blue-500 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                 >
                   Save Changes
                 </motion.button>

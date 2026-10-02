@@ -19,7 +19,11 @@ export function MonthlyTrendChart({ data }: MonthlyTrendChartProps) {
   const shouldReduceMotion = useReducedMotion();
 
   return (
-    <div className="flex flex-col justify-between rounded-2xl border border-neutral-800/90 bg-neutral-900/50 p-6 backdrop-blur-md shadow-xl">
+    <div
+      role="region"
+      aria-label="Weekly completion trend breakdown chart"
+      className="flex flex-col justify-between rounded-2xl border border-neutral-800/90 bg-neutral-900/50 p-5 sm:p-6 backdrop-blur-md shadow-xl"
+    >
       <div className="flex items-center justify-between border-b border-neutral-800/80 pb-4 mb-6">
         <div className="flex items-center gap-2.5">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/30">
@@ -46,7 +50,10 @@ export function MonthlyTrendChart({ data }: MonthlyTrendChartProps) {
               key={week.weekLabel}
               onMouseEnter={() => setHoveredIndex(idx)}
               onMouseLeave={() => setHoveredIndex(null)}
-              className={`group relative flex flex-col gap-2 rounded-xl border p-3.5 transition-all ${
+              tabIndex={0}
+              role="img"
+              aria-label={`${week.weekLabel}: ${week.rate}% completion rate (${week.completed} of ${week.eligible} completed)`}
+              className={`group relative flex flex-col gap-2 rounded-xl border p-3.5 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
                 isHovered
                   ? "border-neutral-700 bg-neutral-800/60 shadow-lg"
                   : "border-neutral-800/60 bg-neutral-950/60"

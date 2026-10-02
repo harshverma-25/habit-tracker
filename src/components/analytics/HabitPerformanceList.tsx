@@ -34,7 +34,11 @@ export function HabitPerformanceList({ habits }: HabitPerformanceListProps) {
   });
 
   return (
-    <div className="w-full rounded-2xl border border-neutral-800/90 bg-neutral-900/50 p-6 backdrop-blur-md shadow-xl space-y-6">
+    <div
+      role="region"
+      aria-label="Habit performance ranking list"
+      className="w-full rounded-2xl border border-neutral-800/90 bg-neutral-900/50 p-5 sm:p-6 backdrop-blur-md shadow-xl space-y-6"
+    >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-neutral-800/80 pb-4">
         <div className="flex items-center gap-2.5">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/30">
@@ -51,10 +55,11 @@ export function HabitPerformanceList({ habits }: HabitPerformanceListProps) {
         </div>
 
         {/* Sort Filter Buttons */}
-        <div className="flex items-center gap-1.5 rounded-xl border border-neutral-800 bg-neutral-950 p-1">
+        <div className="flex items-center gap-1.5 rounded-xl border border-neutral-800 bg-neutral-950 p-1 self-start sm:self-auto">
           <button
             onClick={() => setSortBy("rate")}
-            className={`rounded-lg px-3 py-1 text-xs font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
+            aria-pressed={sortBy === "rate"}
+            className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
               sortBy === "rate"
                 ? "bg-blue-600 text-white shadow-sm"
                 : "text-neutral-400 hover:text-white"
@@ -64,7 +69,8 @@ export function HabitPerformanceList({ habits }: HabitPerformanceListProps) {
           </button>
           <button
             onClick={() => setSortBy("streak")}
-            className={`rounded-lg px-3 py-1 text-xs font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
+            aria-pressed={sortBy === "streak"}
+            className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
               sortBy === "streak"
                 ? "bg-amber-600 text-white shadow-sm"
                 : "text-neutral-400 hover:text-white"
@@ -89,7 +95,9 @@ export function HabitPerformanceList({ habits }: HabitPerformanceListProps) {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.3, delay: rank * 0.04 }}
-                className={`group relative flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl border p-4 transition-all ${
+                tabIndex={0}
+                aria-label={`Rank ${rank + 1}: ${habit.name}, ${habit.completionRate}% completion rate, ${habit.currentStreak} day streak`}
+                className={`group relative flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 rounded-xl border p-4 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
                   isTopRanked
                     ? "border-amber-500/40 bg-amber-500/[0.04] hover:bg-amber-500/[0.08]"
                     : "border-neutral-800/80 bg-neutral-950/60 hover:border-neutral-700/80 hover:bg-neutral-900/60"
@@ -108,7 +116,7 @@ export function HabitPerformanceList({ habits }: HabitPerformanceListProps) {
                   </div>
 
                   <div className="min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <h4 className="truncate text-sm font-bold text-white group-hover:text-blue-400 transition-colors">
                         {habit.name}
                       </h4>
@@ -132,7 +140,7 @@ export function HabitPerformanceList({ habits }: HabitPerformanceListProps) {
                 </div>
 
                 {/* Performance Metrics & Progress Bar */}
-                <div className="flex items-center gap-4 sm:justify-end">
+                <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4 border-t border-neutral-800/40 sm:border-t-0 pt-2 sm:pt-0">
                   {/* Streak Badges */}
                   <div className="flex items-center gap-2">
                     <div className="flex items-center gap-1 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-xs font-semibold text-amber-400">
@@ -146,11 +154,11 @@ export function HabitPerformanceList({ habits }: HabitPerformanceListProps) {
                   </div>
 
                   {/* Percentage Progress */}
-                  <div className="flex flex-col items-end min-w-[80px]">
+                  <div className="flex flex-col items-end min-w-[70px] sm:min-w-[80px]">
                     <span className="text-base font-extrabold font-mono text-white">
                       {habit.completionRate}%
                     </span>
-                    <div className="h-1.5 w-20 overflow-hidden rounded-full bg-neutral-800 mt-1">
+                    <div className="h-1.5 w-16 sm:w-20 overflow-hidden rounded-full bg-neutral-800 mt-1">
                       <motion.div
                         className="h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-500"
                         initial={{ width: 0 }}

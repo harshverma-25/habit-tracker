@@ -52,12 +52,13 @@ export function HabitTracker({
       transition={{ duration: 0.4, ease: "easeOut" }}
       className="w-full rounded-2xl border border-neutral-800/90 bg-neutral-900/40 p-1 shadow-2xl backdrop-blur-md"
     >
+      {/* Horizontal scroll container with custom scrollbar */}
       <div className="custom-scrollbar overflow-x-auto rounded-xl">
-        <table className="w-full border-collapse text-left">
+        <table className="w-full border-collapse text-left min-w-[700px]">
           <thead>
             {/* Top row: Week Headers */}
-            <tr className="border-b border-neutral-800/80 bg-neutral-950/90">
-              <th className="sticky left-0 z-30 min-w-[240px] max-w-[280px] bg-neutral-950 px-4 py-3.5 text-xs font-bold text-neutral-400 uppercase tracking-wider border-r border-neutral-800/80">
+            <tr className="border-b border-neutral-800/80 bg-neutral-950">
+              <th className="sticky left-0 z-30 min-w-[200px] sm:min-w-[240px] max-w-[280px] bg-neutral-950 px-3.5 sm:px-4 py-3.5 text-xs font-bold text-neutral-400 uppercase tracking-wider border-r border-neutral-800 shadow-sm">
                 Habit
               </th>
               {weeks.map((week) => (
@@ -69,20 +70,20 @@ export function HabitTracker({
                   {week.label}
                 </th>
               ))}
-              <th className="sticky right-0 z-20 min-w-[110px] bg-neutral-950 px-4 py-3.5 text-center text-xs font-bold text-neutral-400 uppercase tracking-wider border-l border-neutral-800/80">
+              <th className="sticky right-0 z-20 min-w-[100px] sm:min-w-[110px] bg-neutral-950 px-3 sm:px-4 py-3.5 text-center text-xs font-bold text-neutral-400 uppercase tracking-wider border-l border-neutral-800 shadow-sm">
                 Progress
               </th>
             </tr>
 
             {/* Sub row: Day Name & Day Number */}
-            <tr className="border-b border-neutral-800/80 bg-neutral-950/60 text-center">
-              <th className="sticky left-0 z-30 bg-neutral-950 px-4 py-2 text-xs font-medium text-neutral-500 border-r border-neutral-800/80">
+            <tr className="border-b border-neutral-800/80 bg-neutral-950 text-center">
+              <th className="sticky left-0 z-30 bg-neutral-950 px-3.5 sm:px-4 py-2 text-xs font-medium text-neutral-500 border-r border-neutral-800 shadow-sm">
                 Daily Check-in
               </th>
               {days.map((day) => (
                 <th
                   key={day.date}
-                  className={`min-w-[42px] px-1 py-2 text-center border-r border-neutral-800/40 ${
+                  className={`min-w-[44px] px-1 py-2 text-center border-r border-neutral-800/40 ${
                     day.isToday ? "bg-blue-500/10 border-x-2 border-x-blue-500/50" : ""
                   }`}
                 >
@@ -106,7 +107,7 @@ export function HabitTracker({
                   </div>
                 </th>
               ))}
-              <th className="sticky right-0 z-20 bg-neutral-950 px-4 py-2 border-l border-neutral-800/80" />
+              <th className="sticky right-0 z-20 bg-neutral-950 px-3 sm:px-4 py-2 border-l border-neutral-800 shadow-sm" />
             </tr>
           </thead>
 
@@ -123,24 +124,24 @@ export function HabitTracker({
                     initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.95 }}
-                    transition={{ duration: 0.3, delay: idx * 0.05 }}
+                    transition={{ duration: 0.3, delay: idx * 0.04 }}
                     className="group transition-colors hover:bg-neutral-800/40"
                   >
                     {/* Sticky Habit Column */}
-                    <td className="sticky left-0 z-30 bg-neutral-950 px-4 py-3 border-r border-neutral-800/80 shadow-md">
+                    <td className="sticky left-0 z-30 bg-neutral-950 px-3.5 sm:px-4 py-3 border-r border-neutral-800 shadow-md">
                       <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-3 overflow-hidden">
+                        <div className="flex items-center gap-2.5 sm:gap-3 overflow-hidden">
                           <div
                             className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border shadow-inner ${habit.color}`}
                           >
                             <span className="text-base">{habit.icon}</span>
                           </div>
                           <div className="min-w-0">
-                            <p className="truncate text-sm font-bold text-white group-hover:text-blue-400 transition-colors">
+                            <p className="truncate text-xs sm:text-sm font-bold text-white group-hover:text-blue-400 transition-colors">
                               {habit.name}
                             </p>
                             {habit.description && (
-                              <p className="truncate text-xs font-medium text-neutral-400">
+                              <p className="truncate text-[11px] font-medium text-neutral-400 hidden sm:block">
                                 {habit.description}
                               </p>
                             )}
@@ -152,8 +153,8 @@ export function HabitTracker({
                           <button
                             onClick={() => setActiveMenuHabitId(isMenuOpen ? null : habit.id)}
                             title="Options"
-                            aria-label={`Options for ${habit.name}`}
-                            className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-800 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                            aria-label={`Options for habit ${habit.name}`}
+                            className="flex h-9 w-9 items-center justify-center rounded-lg text-neutral-400 hover:bg-neutral-800 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                           >
                             <MoreVertical className="h-4 w-4" />
                           </button>
@@ -166,14 +167,14 @@ export function HabitTracker({
                                 exit={{ opacity: 0, scale: 0.95, y: -5 }}
                                 transition={{ duration: 0.15 }}
                                 onMouseLeave={() => setActiveMenuHabitId(null)}
-                                className="absolute right-0 top-7 z-50 w-36 overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900/95 p-1 shadow-2xl backdrop-blur-xl"
+                                className="absolute right-0 top-8 z-50 w-36 overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900/95 p-1 shadow-2xl backdrop-blur-xl"
                               >
                                 <button
                                   onClick={() => {
                                     setActiveMenuHabitId(null);
                                     setEditingHabit(habit);
                                   }}
-                                  className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium text-neutral-300 hover:bg-neutral-800 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                                  className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-xs font-medium text-neutral-300 hover:bg-neutral-800 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                                 >
                                   <Edit2 className="h-3.5 w-3.5 text-blue-400" />
                                   <span>Edit</span>
@@ -183,7 +184,7 @@ export function HabitTracker({
                                     setActiveMenuHabitId(null);
                                     if (onArchiveHabit) onArchiveHabit(habit.id);
                                   }}
-                                  className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium text-amber-400 hover:bg-amber-500/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+                                  className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-xs font-medium text-amber-400 hover:bg-amber-500/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
                                 >
                                   <Archive className="h-3.5 w-3.5" />
                                   <span>Archive</span>
@@ -193,7 +194,7 @@ export function HabitTracker({
                                     setActiveMenuHabitId(null);
                                     setDeletingHabit(habit);
                                   }}
-                                  className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium text-rose-400 hover:bg-rose-500/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
+                                  className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-xs font-medium text-rose-400 hover:bg-rose-500/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
                                 >
                                   <Trash2 className="h-3.5 w-3.5" />
                                   <span>Delete</span>
@@ -215,7 +216,7 @@ export function HabitTracker({
                             day.isToday ? "bg-blue-500/[0.04] border-x-2 border-x-blue-500/30" : ""
                           }`}
                         >
-                          <div className="flex items-center justify-center">
+                          <div className="flex items-center justify-center min-h-[36px]">
                             <motion.button
                               whileHover={day.isFuture || shouldReduceMotion ? {} : { scale: 1.1 }}
                               whileTap={day.isFuture || shouldReduceMotion ? {} : { scale: 0.85 }}
@@ -223,7 +224,9 @@ export function HabitTracker({
                               role="checkbox"
                               aria-checked={checked}
                               aria-disabled={day.isFuture}
-                              aria-label={`Mark ${habit.name} on ${day.dayName} ${day.dayNumber}`}
+                              aria-label={`${habit.name} on ${day.dayName} ${day.dayNumber}, ${
+                                day.isFuture ? "future date" : checked ? "completed" : "not completed"
+                              }`}
                               tabIndex={day.isFuture ? -1 : 0}
                               onKeyDown={(e) => {
                                 if ((e.key === " " || e.key === "Enter") && !day.isFuture) {
@@ -232,7 +235,7 @@ export function HabitTracker({
                                 }
                               }}
                               onClick={() => onToggleCompletion(habit.id, day.date)}
-                              className={`group/btn relative flex h-7 w-7 items-center justify-center rounded-lg border transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 focus-visible:ring-offset-neutral-950 ${
+                              className={`group/btn relative flex h-8 w-8 sm:h-7 sm:w-7 items-center justify-center rounded-lg border transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950 ${
                                 day.isFuture
                                   ? "border-neutral-800/40 bg-neutral-900/20 text-neutral-700 cursor-not-allowed opacity-30"
                                   : checked
@@ -268,7 +271,7 @@ export function HabitTracker({
                     })}
 
                     {/* Sticky Habit Progress Bar */}
-                    <td className="sticky right-0 z-20 bg-neutral-950 px-4 py-3 border-l border-neutral-800/80">
+                    <td className="sticky right-0 z-20 bg-neutral-950 px-3 sm:px-4 py-3 border-l border-neutral-800 shadow-md">
                       <div className="flex flex-col gap-1.5">
                         <div className="flex items-center justify-between text-xs">
                           <span

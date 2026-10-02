@@ -20,7 +20,11 @@ export function WeeklyCompletionChart({ data }: WeeklyCompletionChartProps) {
   const maxRate = Math.max(...data.map((d) => d.rate), 100);
 
   return (
-    <div className="flex flex-col justify-between rounded-2xl border border-neutral-800/90 bg-neutral-900/50 p-6 backdrop-blur-md shadow-xl">
+    <div
+      role="region"
+      aria-label="Day of week completion activity chart"
+      className="flex flex-col justify-between rounded-2xl border border-neutral-800/90 bg-neutral-900/50 p-5 sm:p-6 backdrop-blur-md shadow-xl"
+    >
       <div className="flex items-center justify-between border-b border-neutral-800/80 pb-4 mb-6">
         <div className="flex items-center gap-2.5">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/30">
@@ -38,7 +42,7 @@ export function WeeklyCompletionChart({ data }: WeeklyCompletionChartProps) {
       </div>
 
       {/* Bar Chart Grid */}
-      <div className="relative flex h-52 items-end justify-between gap-2 sm:gap-4 px-2 pt-6 pb-2">
+      <div className="relative flex h-52 items-end justify-between gap-2 sm:gap-4 px-1 sm:px-2 pt-6 pb-2">
         {data.map((item, idx) => {
           const heightPercent = item.eligible > 0 ? (item.rate / maxRate) * 100 : 0;
           const isHovered = hoveredIndex === idx;
@@ -48,7 +52,10 @@ export function WeeklyCompletionChart({ data }: WeeklyCompletionChartProps) {
               key={item.day}
               onMouseEnter={() => setHoveredIndex(idx)}
               onMouseLeave={() => setHoveredIndex(null)}
-              className="relative flex flex-1 flex-col items-center h-full justify-end group cursor-pointer"
+              tabIndex={0}
+              role="img"
+              aria-label={`${item.day}: ${item.rate}% completion rate (${item.completed} of ${item.eligible} check-ins)`}
+              className="relative flex flex-1 flex-col items-center h-full justify-end group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-xl"
             >
               {/* Tooltip */}
               {isHovered && (

@@ -41,7 +41,7 @@ export function Toast({ toast, onClose, duration = 4000 }: ToastProps) {
           transition={{ type: "spring", stiffness: 400, damping: 30 }}
           role="status"
           aria-live="polite"
-          className="fixed bottom-6 right-6 z-50 flex max-w-md items-center gap-3 rounded-2xl border border-neutral-800/90 bg-neutral-900/90 p-4 shadow-2xl backdrop-blur-xl"
+          className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:bottom-6 z-50 flex max-w-md items-center gap-3 rounded-2xl border border-neutral-800/90 bg-neutral-900/95 p-4 shadow-2xl backdrop-blur-xl"
         >
           {/* Icon */}
           <div
@@ -76,7 +76,7 @@ export function Toast({ toast, onClose, duration = 4000 }: ToastProps) {
           <button
             onClick={onClose}
             aria-label="Close notification"
-            className="flex h-7 w-7 items-center justify-center rounded-lg text-neutral-400 hover:bg-neutral-800 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-neutral-400 hover:bg-neutral-800 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
           >
             <X className="h-4 w-4" />
           </button>
