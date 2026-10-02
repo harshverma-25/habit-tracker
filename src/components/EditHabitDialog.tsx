@@ -13,12 +13,12 @@ interface EditHabitModalProps {
 }
 
 const COLOR_OPTIONS = [
-  "bg-blue-500/20 text-blue-400 border-blue-500/30",
-  "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
-  "bg-amber-500/20 text-amber-400 border-amber-500/30",
-  "bg-purple-500/20 text-purple-400 border-purple-500/30",
-  "bg-cyan-500/20 text-cyan-400 border-cyan-500/30",
-  "bg-rose-500/20 text-rose-400 border-rose-500/30",
+  "bg-neutral-800 text-white border-neutral-700",
+  "bg-neutral-700 text-white border-neutral-600",
+  "bg-neutral-900 text-neutral-300 border-neutral-700",
+  "bg-zinc-800 text-zinc-200 border-zinc-700",
+  "bg-stone-800 text-stone-200 border-stone-700",
+  "bg-slate-800 text-slate-200 border-slate-700",
 ];
 
 const EMOJI_OPTIONS = ["📖", "💻", "🏃", "🧘", "💧", "🎨", "🎵", "✍️", "🏋️", "🥗"];
@@ -27,7 +27,7 @@ export function EditHabitDialog({ habit, isOpen, onClose, onSave }: EditHabitMod
   const [name, setName] = useState(habit.name);
   const [description, setDescription] = useState(habit.description || "");
   const [icon, setIcon] = useState(habit.icon || "📖");
-  const [selectedColor, setSelectedColor] = useState(habit.color || COLOR_OPTIONS[0]);
+  const [selectedColor] = useState(habit.color || COLOR_OPTIONS[0]);
 
   const shouldReduceMotion = useReducedMotion();
 
@@ -66,35 +66,33 @@ export function EditHabitDialog({ habit, isOpen, onClose, onSave }: EditHabitMod
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/80 backdrop-blur-md"
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm"
           />
 
           {/* Modal Box */}
           <motion.div
-            initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.95, y: 15 }}
+            initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.95, y: 15 }}
-            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+            exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: 8 }}
+            transition={{ duration: 0.15 }}
             role="dialog"
             aria-modal="true"
             aria-labelledby="edit-habit-title"
-            className="relative z-10 w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl border border-neutral-800 bg-neutral-900 p-5 sm:p-6 shadow-2xl custom-scrollbar"
+            className="relative z-10 w-full max-w-md max-h-[90vh] overflow-y-auto rounded-lg border border-neutral-800 bg-neutral-950 p-5 shadow-2xl custom-scrollbar"
           >
-            <div className="flex items-center justify-between border-b border-neutral-800/80 pb-4">
-              <div className="flex items-center gap-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                  <Edit2 className="h-4.5 w-4.5" />
-                </div>
-                <h3 id="edit-habit-title" className="text-lg font-bold text-white">
+            <div className="flex items-center justify-between border-b border-neutral-800 pb-3">
+              <div className="flex items-center gap-2">
+                <Edit2 className="h-4 w-4 text-neutral-300" />
+                <h3 id="edit-habit-title" className="text-base font-bold text-white uppercase tracking-wide">
                   Edit Habit
                 </h3>
               </div>
               <button
                 onClick={onClose}
                 aria-label="Close modal"
-                className="flex h-9 w-9 items-center justify-center rounded-lg text-neutral-400 hover:bg-neutral-800 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                className="flex h-7 w-7 items-center justify-center rounded text-neutral-400 hover:bg-neutral-900 hover:text-white transition-colors"
               >
-                <X className="h-5 w-5" />
+                <X className="h-4 w-4" />
               </button>
             </div>
 
@@ -110,7 +108,7 @@ export function EditHabitDialog({ habit, isOpen, onClose, onSave }: EditHabitMod
                   placeholder="e.g. Read 20 pages"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full rounded-xl border border-neutral-800 bg-neutral-950 px-3.5 py-2.5 text-sm text-white placeholder-neutral-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                  className="w-full rounded-md border border-neutral-800 bg-neutral-900 px-3 py-2 text-xs text-white placeholder-neutral-500 focus:border-neutral-500 focus:outline-none transition-all"
                 />
               </div>
 
@@ -124,7 +122,7 @@ export function EditHabitDialog({ habit, isOpen, onClose, onSave }: EditHabitMod
                   placeholder="e.g. Before going to bed"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full rounded-xl border border-neutral-800 bg-neutral-950 px-3.5 py-2.5 text-sm text-white placeholder-neutral-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                  className="w-full rounded-md border border-neutral-800 bg-neutral-900 px-3 py-2 text-xs text-white placeholder-neutral-500 focus:border-neutral-500 focus:outline-none transition-all"
                 />
               </div>
 
@@ -134,64 +132,37 @@ export function EditHabitDialog({ habit, isOpen, onClose, onSave }: EditHabitMod
                 </label>
                 <div className="flex flex-wrap gap-2 pt-1">
                   {EMOJI_OPTIONS.map((emoji) => (
-                    <motion.button
+                    <button
                       key={emoji}
                       type="button"
-                      whileHover={shouldReduceMotion ? {} : { scale: 1.1 }}
-                      whileTap={shouldReduceMotion ? {} : { scale: 0.9 }}
                       onClick={() => setIcon(emoji)}
                       aria-label={`Select icon ${emoji}`}
-                      className={`flex h-10 w-10 items-center justify-center rounded-xl border text-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
+                      className={`flex h-9 w-9 items-center justify-center rounded border text-base transition-colors ${
                         icon === emoji
-                          ? "border-blue-500 bg-blue-500/20 shadow-md shadow-blue-500/20"
-                          : "border-neutral-800 bg-neutral-950 hover:bg-neutral-800 text-neutral-300"
+                          ? "border-neutral-400 bg-neutral-800 text-white"
+                          : "border-neutral-800 bg-neutral-900 text-neutral-400 hover:bg-neutral-800"
                       }`}
                     >
                       {emoji}
-                    </motion.button>
+                    </button>
                   ))}
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-neutral-300 uppercase tracking-wider mb-1.5">
-                  Color Tag
-                </label>
-                <div className="flex gap-3 pt-1">
-                  {COLOR_OPTIONS.map((cClass, idx) => (
-                    <motion.button
-                      key={cClass}
-                      type="button"
-                      whileHover={shouldReduceMotion ? {} : { scale: 1.15 }}
-                      whileTap={shouldReduceMotion ? {} : { scale: 0.95 }}
-                      onClick={() => setSelectedColor(cClass)}
-                      aria-label={`Select color option ${idx + 1}`}
-                      className={`h-8 w-8 rounded-full border-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white ${cClass.split(" ")[0]} ${
-                        selectedColor === cClass
-                          ? "border-white scale-110 shadow-lg shadow-white/20"
-                          : "border-transparent opacity-70 hover:opacity-100"
-                      }`}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              <div className="mt-6 flex items-center justify-end gap-3 border-t border-neutral-800/80 pt-4">
+              <div className="mt-6 flex items-center justify-end gap-2 border-t border-neutral-800 pt-3">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="rounded-xl border border-neutral-800 bg-neutral-950 px-4 py-2.5 text-sm font-semibold text-neutral-300 hover:bg-neutral-800 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                  className="rounded-md border border-neutral-800 bg-neutral-900 px-3.5 py-1.5 text-xs font-semibold text-neutral-300 hover:bg-neutral-800 transition-colors"
                 >
                   Cancel
                 </button>
-                <motion.button
-                  whileHover={shouldReduceMotion ? {} : { scale: 1.02 }}
-                  whileTap={shouldReduceMotion ? {} : { scale: 0.98 }}
+                <button
                   type="submit"
-                  className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-600/20 hover:bg-blue-500 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                  className="rounded-md bg-neutral-100 px-4 py-1.5 text-xs font-semibold text-neutral-950 hover:bg-neutral-200 transition-colors"
                 >
                   Save Changes
-                </motion.button>
+                </button>
               </div>
             </form>
           </motion.div>
@@ -200,3 +171,4 @@ export function EditHabitDialog({ habit, isOpen, onClose, onSave }: EditHabitMod
     </AnimatePresence>
   );
 }
+

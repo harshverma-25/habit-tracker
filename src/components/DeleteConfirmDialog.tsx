@@ -40,56 +40,54 @@ export function DeleteConfirmDialog({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/80 backdrop-blur-md"
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm"
           />
 
           {/* Modal Container */}
           <motion.div
-            initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.95, y: 15 }}
+            initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.95, y: 15 }}
-            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+            exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: 8 }}
+            transition={{ duration: 0.15 }}
             role="dialog"
             aria-modal="true"
             aria-labelledby="delete-dialog-title"
-            className="relative z-10 w-full max-w-sm overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900 p-6 shadow-2xl text-center"
+            className="relative z-10 w-full max-w-sm overflow-hidden rounded-lg border border-neutral-800 bg-neutral-950 p-5 text-center"
           >
             <button
               onClick={onClose}
               aria-label="Close dialog"
-              className="absolute right-4 top-4 rounded-lg p-1 text-neutral-400 hover:bg-neutral-800 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              className="absolute right-3 top-3 rounded p-1 text-neutral-400 hover:bg-neutral-900 hover:text-white transition-colors"
             >
               <X className="h-4 w-4" />
             </button>
 
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-500/10 text-rose-400 border border-rose-500/20 mb-4 shadow-inner">
-              <AlertTriangle className="h-6 w-6" />
+            <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-lg bg-neutral-900 text-neutral-300 border border-neutral-800 mb-3">
+              <AlertTriangle className="h-5 w-5" />
             </div>
 
-            <h3 id="delete-dialog-title" className="text-lg font-bold text-white">
+            <h3 id="delete-dialog-title" className="text-sm font-bold text-white uppercase tracking-wide">
               Delete &quot;{habitName}&quot;?
             </h3>
-            <p className="mt-2 text-xs font-medium text-neutral-400 leading-relaxed">
-              This will permanently remove the habit and its check-in records. This action cannot be undone.
+            <p className="mt-1.5 text-xs text-neutral-400 leading-relaxed">
+              This will permanently remove this habit and its completion records. This action cannot be undone.
             </p>
 
-            <div className="mt-6 flex items-center justify-center gap-3">
+            <div className="mt-5 flex items-center justify-center gap-2">
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 rounded-xl border border-neutral-800 bg-neutral-950 px-4 py-2.5 text-sm font-semibold text-neutral-300 hover:bg-neutral-800 hover:text-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                className="flex-1 rounded-md border border-neutral-800 bg-neutral-900 px-3 py-1.5 text-xs font-semibold text-neutral-300 hover:bg-neutral-800 transition-colors"
               >
                 Cancel
               </button>
-              <motion.button
-                whileHover={shouldReduceMotion ? {} : { scale: 1.02 }}
-                whileTap={shouldReduceMotion ? {} : { scale: 0.98 }}
+              <button
                 type="button"
                 onClick={onConfirm}
-                className="flex-1 rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-rose-600/20 hover:bg-rose-500 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
+                className="flex-1 rounded-md bg-neutral-100 hover:bg-neutral-200 px-3 py-1.5 text-xs font-semibold text-neutral-950 transition-colors"
               >
                 Delete
-              </motion.button>
+              </button>
             </div>
           </motion.div>
         </div>
@@ -97,3 +95,4 @@ export function DeleteConfirmDialog({
     </AnimatePresence>
   );
 }
+

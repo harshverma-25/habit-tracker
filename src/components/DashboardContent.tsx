@@ -2,9 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { motion, useReducedMotion } from "framer-motion";
 import { Navbar } from "@/components/Navbar";
-import { StatsCards } from "@/components/StatsCards";
 import { MonthSelector } from "@/components/MonthSelector";
 import { HabitTracker } from "@/components/HabitTracker";
 import { AddHabitDialog } from "@/components/AddHabitDialog";
@@ -12,19 +10,16 @@ import { EmptyState } from "@/components/EmptyState";
 import { DashboardSkeleton } from "@/components/DashboardSkeleton";
 import { Toast, ToastMessage } from "@/components/Toast";
 import { generateMonthData } from "@/lib/dates";
-import { calculateHabitStreak, calculateMonthlyProgress } from "@/lib/calculations";
-import { Habit, HabitCompletion, HabitStats } from "@/types/habit";
+import { Habit, HabitCompletion } from "@/types/habit";
 
 export function DashboardContent() {
   const { data: session, status } = useSession();
   const [habits, setHabits] = useState<Habit[]>([]);
   const [completions, setCompletions] = useState<HabitCompletion[]>([]);
-  const [allUserCompletions, setAllUserCompletions] = useState<HabitCompletion[]>([]);
+  const [, setAllUserCompletions] = useState<HabitCompletion[]>([]);
   const [isFetchingHabits, setIsFetchingHabits] = useState<boolean>(false);
   const [isFetchingCompletions, setIsFetchingCompletions] = useState<boolean>(false);
   const [toast, setToast] = useState<ToastMessage | null>(null);
-
-  const shouldReduceMotion = useReducedMotion();
 
   // Dynamic Month & Year state (default to current date)
   const today = useMemo(() => new Date(), []);
@@ -293,95 +288,41 @@ export function DashboardContent() {
     }
   };
 
-  const userName = session?.user?.name || "Harsh";
-
-  // Calculate dynamic stats instantly from state
-  const currentStats: HabitStats = useMemo(() => {
-    const activeHabits = habits.filter((h) => !h.isArchived);
-    if (activeHabits.length === 0) {
-      return { totalHabits: 0, completedCheckins: 0, currentStreak: 0, overallProgress: 0 };
-    }
-
-    // Streak calculation across all active habits
-    let maxCurrentStreak = 0;
-    activeHabits.forEach((habit) => {
-      const completedDates = allUserCompletions
-        .filter((c) => c.habitId === habit.id && c.completed)
-        .map((c) => c.date);
-      const { currentStreak } = calculateHabitStreak(completedDates, today);
-      if (currentStreak > maxCurrentStreak) {
-        maxCurrentStreak = currentStreak;
-      }
-    });
-
-    // Monthly progress calculation considering creation date & future dates
-    const habitCreationList = activeHabits.map((h) => ({
-      id: h.id,
-      createdAt: h.createdAt,
-    }));
-
-    const { completedCheckins, overallProgress } = calculateMonthlyProgress(
-      habitCreationList,
-      completions,
-      monthData.days
-    );
-
-    return {
-      totalHabits: activeHabits.length,
-      completedCheckins,
-      currentStreak: maxCurrentStreak,
-      overallProgress,
-    };
-  }, [habits, completions, allUserCompletions, monthData.days, today]);
-
   return (
-    <div className="min-h-screen bg-neutral-950 text-neutral-100 flex flex-col font-sans selection:bg-blue-500 selection:text-white">
+    <div className="min-h-screen bg-black text-neutral-100 flex flex-col font-sans selection:bg-neutral-700 selection:text-white">
       <Navbar />
 
       {/* Animated Toast Notification */}
       <Toast toast={toast} onClose={() => setToast(null)} />
 
-      <main className="flex-1 mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
+      <main className="flex-1 w-full px-3 py-4 sm:px-6 lg:px-8 space-y-3">
         {loading ? (
           <DashboardSkeleton />
         ) : (
-          <motion.div
-            initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35, ease: "easeOut" }}
-            className="space-y-8"
-          >
-            {/* Header */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-                  Good morning, {userName} 👋
-                </h1>
-                <p className="mt-1 text-sm font-medium text-neutral-400">
-                  Stay consistent. Small actions become big results.
-                </p>
+          <div className="space-y-3">
+            {/* Top Toolbar: Month Navigation & Add Habit Action */}
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex-1 min-w-[260px]">
+                <MonthSelector
+                  monthName={monthData.monthName}
+                  year={monthData.year}
+                  onPrevMonth={handlePrevMonth}
+                  onNextMonth={handleNextMonth}
+                  onSelectCurrentMonth={handleSelectCurrentMonth}
+                />
               </div>
-              <AddHabitDialog onAddHabit={handleAddHabit} />
+
+              <div className="shrink-0">
+                <AddHabitDialog onAddHabit={handleAddHabit} />
+              </div>
             </div>
-
-            {/* Dynamic Statistics Cards */}
-            <StatsCards stats={currentStats} />
-
-            {/* Month Selector */}
-            <MonthSelector
-              monthName={monthData.monthName}
-              year={monthData.year}
-              onPrevMonth={handlePrevMonth}
-              onNextMonth={handleNextMonth}
-              onSelectCurrentMonth={handleSelectCurrentMonth}
-            />
 
             {/* Main Habit Tracker Grid or Empty State */}
             {isFetchingCompletions && habits.length > 0 ? (
-              <div className="rounded-2xl border border-neutral-800/80 bg-neutral-900/40 p-8 text-center backdrop-blur-md">
-                <div className="flex items-center justify-center gap-3 text-neutral-400">
-                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
-                  <span className="text-sm font-medium">Updating month calendar...</span>
+              <div className="rounded-lg border border-neutral-800 bg-neutral-950 p-8 text-center">
+                <div className="flex items-center justify-center gap-2 text-neutral-400">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  <span className="text-xs font-mono">Loading month data...</span>
                 </div>
               </div>
             ) : habits.length === 0 ? (
@@ -391,7 +332,7 @@ export function DashboardContent() {
                     name: "Read a book",
                     description: "20 pages every day",
                     icon: "📖",
-                    color: "bg-blue-500/20 text-blue-400 border-blue-500/30",
+                    color: "bg-neutral-800 text-white border-neutral-700",
                     frequency: "daily",
                     isArchived: false,
                   })
@@ -409,9 +350,10 @@ export function DashboardContent() {
                 onDeleteHabit={handleDeleteHabit}
               />
             )}
-          </motion.div>
+          </div>
         )}
       </main>
     </div>
   );
 }
+

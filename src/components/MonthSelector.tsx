@@ -2,7 +2,7 @@
 
 import React from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface MonthSelectorProps {
   monthName: string;
@@ -22,76 +22,57 @@ export function MonthSelector({
   const shouldReduceMotion = useReducedMotion();
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, ease: "easeOut" }}
-      className="flex flex-wrap items-center justify-between gap-3 sm:gap-4 rounded-2xl border border-neutral-800/90 bg-neutral-900/50 p-3.5 sm:px-6 backdrop-blur-md shadow-xl"
-    >
+    <div className="flex items-center justify-between gap-3 bg-neutral-900 border border-neutral-800 px-4 py-2.5 rounded-lg">
       {/* Current Month & Year Display */}
       <div className="flex items-center gap-3">
-        <motion.div
-          whileHover={shouldReduceMotion ? {} : { rotate: 12, scale: 1.05 }}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/30 shadow-inner"
-        >
-          <CalendarIcon className="h-5 w-5" />
-        </motion.div>
-        <div>
-          <div className="relative overflow-hidden h-7 min-w-[130px] sm:min-w-[150px]">
-            <AnimatePresence mode="wait">
-              <motion.h2
-                key={`${monthName}-${year}`}
-                initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -12 }}
-                transition={{ duration: 0.2, ease: "easeInOut" }}
-                className="absolute text-base sm:text-xl font-extrabold text-white tracking-tight"
-              >
-                {monthName} {year}
-              </motion.h2>
-            </AnimatePresence>
-          </div>
-          <p className="text-[11px] sm:text-xs font-medium text-neutral-400">Dynamic Monthly Grid</p>
+        <div className="relative overflow-hidden h-6 min-w-[130px] sm:min-w-[160px] flex items-center">
+          <AnimatePresence mode="wait">
+            <motion.h2
+              key={`${monthName}-${year}`}
+              initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -6 }}
+              transition={{ duration: 0.15, ease: "easeInOut" }}
+              className="text-sm sm:text-base font-bold text-white tracking-wider uppercase font-mono"
+            >
+              {monthName} {year}
+            </motion.h2>
+          </AnimatePresence>
         </div>
       </div>
 
       {/* Navigation buttons */}
-      <div className="flex items-center gap-2">
-        <motion.button
-          whileHover={shouldReduceMotion ? {} : { scale: 1.05 }}
-          whileTap={shouldReduceMotion ? {} : { scale: 0.95 }}
+      <div className="flex items-center gap-1.5">
+        <button
           onClick={onPrevMonth}
           title="Previous Month"
           aria-label="Previous Month"
-          className="flex h-10 w-10 items-center justify-center rounded-xl border border-neutral-800 bg-neutral-950 text-neutral-300 hover:bg-neutral-800 hover:border-neutral-700 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+          className="flex h-7 w-7 items-center justify-center rounded border border-neutral-700 bg-neutral-950 text-neutral-300 hover:bg-neutral-800 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-neutral-400"
         >
-          <ChevronLeft className="h-5 w-5" />
-        </motion.button>
+          <ChevronLeft className="h-4 w-4" />
+        </button>
 
         {onSelectCurrentMonth && (
-          <motion.button
-            whileHover={shouldReduceMotion ? {} : { scale: 1.05 }}
-            whileTap={shouldReduceMotion ? {} : { scale: 0.95 }}
+          <button
             onClick={onSelectCurrentMonth}
             title="Jump to current month"
             aria-label="Jump to current month"
-            className="h-10 rounded-xl border border-neutral-800 bg-neutral-950 px-3.5 text-xs font-semibold text-neutral-300 hover:bg-neutral-800 hover:border-neutral-700 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            className="h-7 rounded border border-neutral-700 bg-neutral-950 px-2.5 text-xs font-semibold text-neutral-300 hover:bg-neutral-800 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-neutral-400"
           >
             Today
-          </motion.button>
+          </button>
         )}
 
-        <motion.button
-          whileHover={shouldReduceMotion ? {} : { scale: 1.05 }}
-          whileTap={shouldReduceMotion ? {} : { scale: 0.95 }}
+        <button
           onClick={onNextMonth}
           title="Next Month"
           aria-label="Next Month"
-          className="flex h-10 w-10 items-center justify-center rounded-xl border border-neutral-800 bg-neutral-950 text-neutral-300 hover:bg-neutral-800 hover:border-neutral-700 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+          className="flex h-7 w-7 items-center justify-center rounded border border-neutral-700 bg-neutral-950 text-neutral-300 hover:bg-neutral-800 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-neutral-400"
         >
-          <ChevronRight className="h-5 w-5" />
-        </motion.button>
+          <ChevronRight className="h-4 w-4" />
+        </button>
       </div>
-    </motion.div>
+    </div>
   );
 }
+
