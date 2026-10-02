@@ -122,27 +122,39 @@ export function DashboardContent() {
     setCurrentMonth(today.getMonth() + 1);
   };
 
-  // Add Habit via MongoDB API
-  const handleAddHabit = async (newHabitData: Omit<Habit, "id" | "createdAt" | "updatedAt">) => {
+  // Add Habit(s) via MongoDB API (bulk or single)
+  const handleAddHabits = async (
+    newHabitsData: Omit<Habit, "id" | "createdAt" | "updatedAt">[]
+  ): Promise<boolean> => {
     try {
       const res = await fetch("/api/habits", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newHabitData),
+        body: JSON.stringify({ habits: newHabitsData }),
       });
 
       if (res.ok) {
         const data = await res.json();
-        setHabits((prev) => [...prev, data.habit]);
-        showToast("success", `"${newHabitData.name}" added to your habits.`, "Habit Created");
+        const addedList: Habit[] = data.habits || (data.habit ? [data.habit] : []);
+        setHabits((prev) => [...prev, ...addedList]);
+        const msg =
+          addedList.length === 1
+            ? `"${addedList[0].name}" added to your habits.`
+            : `${addedList.length} habits added successfully.`;
+        showToast("success", msg, "Habits Created");
+        return true;
       } else {
-        showToast("error", "Failed to create habit.", "Error");
+        const errData = await res.json().catch(() => ({}));
+        showToast("error", errData.error || "Failed to create habits.", "Error");
+        return false;
       }
     } catch (err) {
-      console.error("Error creating habit:", err);
-      showToast("error", "Network error creating habit.", "Network Error");
+      console.error("Error creating habit(s):", err);
+      showToast("error", "Network error creating habits.", "Network Error");
+      return false;
     }
   };
+
 
   // Edit Habit via MongoDB API
   const handleEditHabit = async (updated: {
@@ -313,7 +325,10 @@ export function DashboardContent() {
               </div>
 
               <div className="shrink-0">
-                <AddHabitDialog onAddHabit={handleAddHabit} />
+                <AddHabitDialog
+                  onAddHabits={handleAddHabits}
+                  existingHabitNames={habits.map((h) => h.name)}
+                />
               </div>
             </div>
 
@@ -328,14 +343,16 @@ export function DashboardContent() {
             ) : habits.length === 0 ? (
               <EmptyState
                 onAddClick={() =>
-                  handleAddHabit({
-                    name: "Read a book",
-                    description: "20 pages every day",
-                    icon: "📖",
-                    color: "bg-neutral-800 text-white border-neutral-700",
-                    frequency: "daily",
-                    isArchived: false,
-                  })
+                  handleAddHabits([
+                    {
+                      name: "Read a book",
+                      description: "20 pages every day",
+                      icon: "📖",
+                      color: "bg-neutral-800 text-white border-neutral-700",
+                      frequency: "daily",
+                      isArchived: false,
+                    },
+                  ])
                 }
               />
             ) : (

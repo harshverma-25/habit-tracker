@@ -42,7 +42,7 @@ export async function GET() {
   }
 }
 
-// POST /api/habits — Create habit for authenticated user
+// POST /api/habits — Create habit(s) for authenticated user (single or bulk)
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -51,10 +51,20 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { name, description, icon, color } = body;
+    const itemsToCreate = Array.isArray(body.habits)
+      ? body.habits
+      : Array.isArray(body)
+      ? body
+      : [body];
 
-    if (!name || typeof name !== "string" || !name.trim()) {
-      return NextResponse.json({ error: "Habit name is required" }, { status: 400 });
+    if (itemsToCreate.length === 0) {
+      return NextResponse.json({ error: "No habits provided" }, { status: 400 });
+    }
+
+    for (const item of itemsToCreate) {
+      if (!item.name || typeof item.name !== "string" || !item.name.trim()) {
+        return NextResponse.json({ error: "Habit name is required for all entries" }, { status: 400 });
+      }
     }
 
     await connectToDatabase();
@@ -63,17 +73,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const newHabit = await HabitModel.create({
+    const docs = itemsToCreate.map((item: { name: string; description?: string; icon?: string; color?: string }) => ({
       userId: user._id,
-      name: name.trim(),
-      description: description ? description.trim() : "",
-      icon: icon || "📖",
-      color: color || "bg-blue-500/20 text-blue-400 border-blue-500/30",
+      name: item.name.trim(),
+      description: item.description ? item.description.trim() : "",
+      icon: item.icon || "📖",
+      color: item.color || "bg-neutral-800 text-white border-neutral-700",
       frequency: "daily",
       isArchived: false,
-    });
+    }));
 
-    const formattedHabit = {
+    const createdHabits = await HabitModel.insertMany(docs);
+
+    const formattedHabits = createdHabits.map((newHabit) => ({
       id: newHabit._id.toString(),
       name: newHabit.name,
       description: newHabit.description || "",
@@ -83,11 +95,18 @@ export async function POST(request: Request) {
       isArchived: newHabit.isArchived,
       createdAt: newHabit.createdAt.toISOString(),
       updatedAt: newHabit.updatedAt.toISOString(),
-    };
+    }));
 
-    return NextResponse.json({ habit: formattedHabit }, { status: 201 });
+    return NextResponse.json(
+      {
+        habits: formattedHabits,
+        habit: formattedHabits[0],
+      },
+      { status: 201 }
+    );
   } catch (error) {
     console.error("POST /api/habits error:", error);
-    return NextResponse.json({ error: "Failed to create habit" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to create habits" }, { status: 500 });
   }
 }
+
