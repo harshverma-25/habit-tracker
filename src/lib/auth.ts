@@ -81,5 +81,5 @@ export const authOptions: NextAuthOptions = {
     error: "/login",
   },
   debug: process.env.NODE_ENV === "development",
-  secret: process.env.NEXTAUTH_SECRET || "habitflow_default_secret_key_2026",
+  secret: process.env.NEXTAUTH_SECRET || "the_habit_tracker_default_secret_key_2026",
 };

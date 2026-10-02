@@ -6,7 +6,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import { Sparkles, LayoutDashboard, BarChart3, Settings, LogOut, LogIn, Menu, X } from "lucide-react";
+import { LayoutDashboard, BarChart3, LogOut, LogIn, Menu, X } from "lucide-react";
 
 export function Navbar() {
   const { data: session } = useSession();
@@ -25,11 +25,15 @@ export function Navbar() {
           href="/"
           className="flex items-center gap-2 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 rounded-lg p-1"
         >
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-neutral-800 border border-neutral-700 text-neutral-200">
-            <Sparkles className="h-4 w-4 text-white" />
-          </div>
+          <Image
+            src="/logo.png"
+            alt="The Habit Tracker logo"
+            width={28}
+            height={28}
+            className="h-7 w-7 object-contain rounded-sm"
+          />
           <span className="text-base font-bold tracking-tight text-white group-hover:text-neutral-300 transition-colors">
-            HabitFlow
+            The Habit Tracker
           </span>
         </Link>
 
@@ -59,15 +63,7 @@ export function Navbar() {
             <span>Analytics</span>
           </Link>
 
-          <button
-            disabled
-            title="Settings"
-            aria-label="Settings"
-            className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium text-neutral-600 transition-colors cursor-not-allowed"
-          >
-            <Settings className="h-3.5 w-3.5" />
-            <span>Settings</span>
-          </button>
+   
         </nav>
 
         {/* Desktop User Profile Avatar / Sign In / Sign Out */}

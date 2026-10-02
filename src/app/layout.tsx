@@ -14,8 +14,18 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "HabitFlow — Build better habits. One day at a time.",
-  description: "Modern, dark-themed monthly habit tracking application.",
+  title: "The Habit Tracker — Build better habits. One day at a time.",
+  description: "A minimal, monochrome monthly habit journal and daily tracking system.",
+  icons: {
+    icon: "/logo.png",
+    shortcut: "/logo.png",
+    apple: "/logo.png",
+  },
+  openGraph: {
+    title: "The Habit Tracker — Build better habits. One day at a time.",
+    description: "A minimal, monochrome monthly habit journal and daily tracking system.",
+    siteName: "The Habit Tracker",
+  },
 };
 
 export default function RootLayout({

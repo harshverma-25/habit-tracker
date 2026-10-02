@@ -46,13 +46,19 @@ export function HabitTracker({
 
   return (
     <div className="w-full rounded-lg border border-neutral-800 bg-neutral-950 overflow-hidden shadow-xl">
+      {/* Mobile scroll hint banner */}
+      <div className="sm:hidden flex items-center justify-between text-[10px] text-neutral-400 px-3 py-1.5 border-b border-neutral-800 bg-neutral-900/80 font-mono tracking-tight">
+        <span>← Swipe horizontally to view full month →</span>
+        <span className="text-[9px] uppercase tracking-widest text-neutral-500">{days.length} DAYS</span>
+      </div>
+
       {/* Horizontal scroll container with custom scrollbar */}
-      <div className="custom-scrollbar overflow-x-auto max-w-full">
-        <table className="w-full border-collapse text-left table-fixed">
+      <div className="custom-scrollbar overflow-x-auto max-w-full touch-pan-x pb-1">
+        <table className="w-full min-w-max border-collapse text-left table-fixed">
           <thead>
             {/* Top row: Week Headers */}
             <tr className="border-b border-neutral-800 bg-neutral-900 text-neutral-300">
-              <th className="sticky left-0 z-30 w-[200px] min-w-[200px] sm:w-[240px] sm:min-w-[240px] bg-neutral-900 px-3 py-2 text-[11px] font-bold uppercase tracking-wider border-r border-neutral-800">
+              <th className="sticky left-0 z-30 w-[180px] min-w-[180px] sm:w-[240px] sm:min-w-[240px] bg-neutral-900 px-3 py-2 text-[11px] font-bold uppercase tracking-wider border-r border-neutral-800">
                 DAILY HABITS
               </th>
               {weeks.map((week) => (
@@ -64,20 +70,20 @@ export function HabitTracker({
                   {week.label}
                 </th>
               ))}
-              <th className="sticky right-0 z-20 w-[64px] min-w-[64px] bg-neutral-900 px-2 py-1.5 text-center text-[10px] font-bold text-neutral-400 uppercase tracking-wider border-l border-neutral-800">
+              <th className="sticky right-0 z-20 w-[60px] min-w-[60px] bg-neutral-900 px-2 py-1.5 text-center text-[10px] font-bold text-neutral-400 uppercase tracking-wider border-l border-neutral-800">
                 %
               </th>
             </tr>
 
             {/* Sub row: Day Name & Day Number */}
             <tr className="border-b border-neutral-800 bg-neutral-950 text-center">
-              <th className="sticky left-0 z-30 bg-neutral-950 px-3 py-1.5 text-[11px] font-semibold text-neutral-400 border-r border-neutral-800 text-left">
+              <th className="sticky left-0 z-30 w-[180px] min-w-[180px] sm:w-[240px] sm:min-w-[240px] bg-neutral-950 px-3 py-1.5 text-[11px] font-semibold text-neutral-400 border-r border-neutral-800 text-left">
                 Check-in
               </th>
               {days.map((day) => (
                 <th
                   key={day.date}
-                  className={`w-[36px] min-w-[36px] max-w-[36px] p-1 text-center border-r border-neutral-800/80 ${
+                  className={`w-[40px] min-w-[40px] max-w-[40px] p-1 text-center border-r border-neutral-800/80 ${
                     day.isToday ? "bg-neutral-800/90 border-x border-x-neutral-700" : ""
                   }`}
                 >
@@ -99,7 +105,7 @@ export function HabitTracker({
                   </div>
                 </th>
               ))}
-              <th className="sticky right-0 z-20 bg-neutral-950 px-2 py-1.5 border-l border-neutral-800" />
+              <th className="sticky right-0 z-20 w-[60px] min-w-[60px] bg-neutral-950 px-2 py-1.5 border-l border-neutral-800" />
             </tr>
           </thead>
 
@@ -114,7 +120,7 @@ export function HabitTracker({
                   className="group transition-colors hover:bg-neutral-900/50"
                 >
                   {/* Sticky Habit Column */}
-                  <td className="sticky left-0 z-30 bg-neutral-950 px-3 py-2 border-r border-neutral-800 shadow-sm">
+                  <td className="sticky left-0 z-30 w-[180px] min-w-[180px] sm:w-[240px] sm:min-w-[240px] bg-neutral-950 px-3 py-2 border-r border-neutral-800 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.5)]">
                     <div className="flex items-center justify-between gap-1.5">
                       <div className="flex items-center gap-2 overflow-hidden">
                         <span className="text-sm shrink-0">{habit.icon}</span>
@@ -194,11 +200,11 @@ export function HabitTracker({
                     return (
                       <td
                         key={day.date}
-                        className={`w-[36px] min-w-[36px] max-w-[36px] p-1 text-center border-r border-neutral-800/60 ${
+                        className={`w-[40px] min-w-[40px] max-w-[40px] p-1 text-center border-r border-neutral-800/60 ${
                           day.isToday ? "bg-neutral-900/60" : ""
                         }`}
                       >
-                        <div className="flex items-center justify-center min-h-[30px]">
+                        <div className="flex items-center justify-center min-h-[32px]">
                           <button
                             disabled={day.isFuture}
                             role="checkbox"
@@ -213,7 +219,7 @@ export function HabitTracker({
                               }
                             }}
                             onClick={() => onToggleCompletion(habit.id, day.date)}
-                            className={`flex h-5 w-5 items-center justify-center rounded-[3px] border transition-colors ${
+                            className={`flex h-6 w-6 items-center justify-center rounded-[4px] border transition-colors ${
                               day.isFuture
                                 ? "border-neutral-900 bg-neutral-950 text-transparent cursor-not-allowed opacity-20"
                                 : checked
@@ -221,7 +227,7 @@ export function HabitTracker({
                                 : "border-neutral-700 bg-neutral-950 text-transparent hover:border-neutral-500 hover:bg-neutral-900"
                             }`}
                           >
-                            {checked && <Check className="h-3.5 w-3.5 stroke-[3]" />}
+                            {checked && <Check className="h-4 w-4 stroke-[3]" />}
                           </button>
                         </div>
                       </td>
@@ -229,7 +235,7 @@ export function HabitTracker({
                   })}
 
                   {/* Sticky Habit Progress Percentage */}
-                  <td className="sticky right-0 z-20 bg-neutral-950 px-2 py-2 text-center border-l border-neutral-800">
+                  <td className="sticky right-0 z-20 w-[60px] min-w-[60px] max-w-[60px] bg-neutral-950 px-2 py-2 text-center border-l border-neutral-800 shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.5)]">
                     <span className="font-mono text-[11px] font-bold text-neutral-400">
                       {progress}%
                     </span>

@@ -53,7 +53,7 @@ export default function Home() {
               </h1>
 
               <p className="text-base sm:text-lg text-neutral-400 font-normal leading-relaxed max-w-xl">
-                HabitFlow is a quiet digital space for your daily routines. Track consistency across a clean monthly grid with zero noise, zero dopamine traps, and absolute visual clarity.
+                The Habit Tracker is a quiet digital space for your daily routines. Track consistency across a clean monthly grid with zero noise, zero dopamine traps, and absolute visual clarity.
               </p>
 
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-2">
@@ -85,7 +85,7 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Right Column: Realistic HabitFlow Calendar Interface Preview */}
+            {/* Right Column: Realistic Calendar Interface Preview */}
             <div className="lg:col-span-6">
               <motion.div
                 initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 16 }}
@@ -195,7 +195,7 @@ export default function Home() {
               </h2>
 
               <p className="text-sm sm:text-base text-neutral-400 leading-relaxed font-normal">
-                Instead of isolated check-in screens, HabitFlow lays out your entire month across a unified grid. See every day, every week, and every habit in one elegant view.
+                Instead of isolated check-in screens, The Habit Tracker lays out your entire month across a unified grid. See every day, every week, and every habit in one elegant view.
               </p>
 
               {/* Interactive Calendar Demonstration Card */}
@@ -391,7 +391,7 @@ export default function Home() {
               </h2>
 
               <p className="text-sm sm:text-base text-neutral-400 leading-relaxed font-normal">
-                HabitFlow analytics highlight patterns across your week and month. See which days of the week you are most consistent, without wading through endless charts or bloated dashboards.
+                The Habit Tracker analytics highlight patterns across your week and month. See which days of the week you are most consistent, without wading through endless charts or bloated dashboards.
               </p>
             </div>
           </div>
@@ -437,7 +437,8 @@ export default function Home() {
       <footer className="w-full border-t border-neutral-800 bg-black py-8">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-neutral-500 font-mono">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-white uppercase tracking-wider">HabitFlow</span>
+            <Image src="/logo.png" alt="The Habit Tracker logo" width={18} height={18} className="h-4 w-4 object-contain" />
+            <span className="font-bold text-white uppercase tracking-wider">The Habit Tracker</span>
             <span>— Minimalist Habit Journal</span>
           </div>
 

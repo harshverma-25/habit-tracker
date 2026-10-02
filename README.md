@@ -1,6 +1,6 @@
-# HabitFlow — Modern Dark SaaS Habit Tracker
+# The Habit Tracker — Modern Dark Habit Journal & Tracker
 
-HabitFlow is a modern, dark-themed monthly habit tracking application built with **Next.js 16 (App Router)**, **TypeScript**, **MongoDB (Mongoose)**, **NextAuth.js (Google OAuth)**, **Tailwind CSS v4**, and **Framer Motion**.
+The Habit Tracker is a modern, dark-themed monthly habit tracking application built with **Next.js 16 (App Router)**, **TypeScript**, **MongoDB (Mongoose)**, **NextAuth.js (Google OAuth)**, **Tailwind CSS v4**, and **Framer Motion**.
 
 It bridges the structure of a monthly habit tracking spreadsheet with the interactivity, speed, and aesthetics of a modern web application.
 
@@ -133,7 +133,7 @@ npm start
 
 ## 🗄️ Database Schema & Indexing
 
-HabitFlow uses three primary MongoDB collections with compound indexes for performance and data integrity:
+The Habit Tracker uses three primary MongoDB collections with compound indexes for performance and data integrity:
 
 1. **`User` Collection**:
    - `email` (Unique index)

@@ -1,9 +1,10 @@
 "use client";
 
 import React, { Suspense } from "react";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { Sparkles, ArrowRight, AlertCircle } from "lucide-react";
+import { ArrowRight, AlertCircle } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 
 function LoginContent() {
@@ -12,12 +13,18 @@ function LoginContent() {
 
   return (
     <div className="w-full max-w-md overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900/80 p-8 shadow-2xl backdrop-blur-md text-center">
-      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 shadow-lg shadow-blue-500/25 mb-6">
-        <Sparkles className="h-7 w-7 text-white" />
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-neutral-950 border border-neutral-800 p-2 mb-6 shadow-inner">
+        <Image
+          src="/logo.png"
+          alt="The Habit Tracker logo"
+          width={48}
+          height={48}
+          className="h-10 w-10 object-contain"
+        />
       </div>
 
       <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
-        Welcome to HabitFlow
+        Welcome to The Habit Tracker
       </h1>
       <p className="mt-2 text-sm text-neutral-400">
         Build better habits. One day at a time. Sign in with Google to start tracking your consistency.

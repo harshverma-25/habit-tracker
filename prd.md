@@ -1,7 +1,7 @@
-HabitFlow — Product Requirements Document (PRD)
+The Habit Tracker — Product Requirements Document (PRD)
 
 Version: 1.0
-Project: HabitFlow
+Project: The Habit Tracker
 Type: Full-stack habit tracking web application
 Frontend: Next.js + TypeScript
 Database: MongoDB
@@ -13,9 +13,9 @@ Icons: Lucide React
 1. Product Overview
 1.1 Product Name
 
-HabitFlow
+The Habit Tracker
 
-HabitFlow is a modern, minimal, dark-themed habit tracking application that allows users to:
+The Habit Tracker is a modern, minimal, dark-themed habit tracking application that allows users to:
 
 Create personal habits
 Track habits day-by-day
