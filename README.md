@@ -8,7 +8,7 @@ It bridges the structure of a monthly habit tracking spreadsheet with the intera
 
 ## 🌟 Key Features
 
-- **Google OAuth Authentication**: Secure login backed by strict server-side user data isolation.
+- **Google OAuth Authentication**: Secure login backed by strict server-side user data  isolation.
 - **Dynamic Monthly Calendar Engine**:
   - Automatically calculates days, leap years, and weekday names.
   - Dynamically groups days into weeks (Week 1 to Week 5).
